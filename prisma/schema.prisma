@@ -1,0 +1,52 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Record of each time we fetch the GTFS data
+model GtfsFetch {
+  id            Int               @id @default(autoincrement())
+  feedName      String            // e.g., "subway", "staten-island-railway"
+  fetchTime     DateTime          // When we fetched the data
+  feedTimestamp DateTime          // Timestamp from the feed header
+  createdAt     DateTime          @default(now())
+  
+  // Relations
+  vehiclePositions  VehiclePosition[]
+}
+
+// For storing vehicle positions
+model VehiclePosition {
+  id                  Int      @id @default(autoincrement())
+  fetchId             Int      // Reference to the fetch record
+  entityId            String   // GTFS entity ID
+  tripId              String?  // Trip identifier
+  routeId             String?  // Route identifier
+  startTime           String?  // Trip start time
+  startDate           String?  // Trip start date
+  scheduleRelationship Int?    // Scheduled, added, canceled, etc.
+  stopId              String?  // Stop ID if the vehicle is stopped at a stop
+  stopLat             Float?  // Stop latitude
+  stopLon             Float?  // Stop longitude
+  currentStatus       Int?     // Status of vehicle (incoming, stopped, in transit)
+  timestamp           DateTime? // Moment at which the position was measured
+  createdAt           DateTime @default(now())
+  
+  // Relation to the fetch record
+  fetch GtfsFetch @relation(fields: [fetchId], references: [id])
+  
+  @@index([fetchId])
+  @@index([tripId])
+  @@index([routeId])
+  @@index([stopId])
+}
