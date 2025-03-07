@@ -3,5 +3,3 @@ findmy
 gtfs-realtime-bindings
 protobuf
 requests
-fastapi
-uvicorn

@@ -6,6 +6,8 @@ import os
 from os.path import join
 import json
 from http.server import BaseHTTPRequestHandler
+from datetime import datetime
+
 
 
 class handler(BaseHTTPRequestHandler):
@@ -52,7 +54,13 @@ class handler(BaseHTTPRequestHandler):
                 feed.ParseFromString(response.content)
 
                 for entity in feed.entity:
+                    if not entity.HasField('vehicle'): continue
                     vehicle = entity.vehicle
+
+                    print('entity: ', entity)
+                    print('vehicle: ', vehicle)
+                    print('stop id: ', vehicle.stop_id)
+                    print('stop', stops[vehicle.stop_id])
 
                     update = {
                                 'fetchId': fetch_id,
@@ -66,7 +74,7 @@ class handler(BaseHTTPRequestHandler):
                                 'stopLat': float(stops[vehicle.stop_id]['stop_lat']),
                                 'stopLon': float(stops[vehicle.stop_id]['stop_lon']),
                                 'currentStatus': vehicle.current_status if vehicle.HasField('current_status') else None,
-                                'timestamp': vehicle.timestamp if vehicle.HasField('timestamp') else None
+                                'timestamp': datetime.fromtimestamp(vehicle.timestamp) if vehicle.HasField('timestamp') else None
                             }
                     
                     updates.append(update)
@@ -84,8 +92,6 @@ class handler(BaseHTTPRequestHandler):
 
                     message = f"Stored {len(updates)} vehicle positions"
                     print(message)
-
-                    
 
                 else:
                     message = "No updates found"
@@ -110,3 +116,7 @@ class handler(BaseHTTPRequestHandler):
         self.end_headers()
 
         self.wfile.write(message.encode('utf-8'))
+
+
+
+
