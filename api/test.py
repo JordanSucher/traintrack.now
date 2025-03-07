@@ -63,12 +63,12 @@ class handler(BaseHTTPRequestHandler):
                                 'routeId': vehicle.trip.route_id,
                                 'startTime': vehicle.trip.start_time,
                                 'startDate': vehicle.trip.start_date,
+                                'scheduleRelationship': vehicle.trip.schedule_relationship,
+                                'stopId': vehicle.stop_id if vehicle.HasField('stop_id') else None,
                                 'stopLat': float(stops[vehicle.stop_id]['stop_lat']),
                                 'stopLon': float(stops[vehicle.stop_id]['stop_lon']),
-                                'scheduleRelationship': vehicle.trip.schedule_relationship,
-                                'timestamp': vehicle.timestamp if vehicle.HasField('timestamp') else None,
-                                'stop_id': vehicle.stop_id if vehicle.HasField('stop_id') else None,
-                                'current_status': vehicle.current_status if vehicle.HasField('current_status') else None
+                                'currentStatus': vehicle.current_status if vehicle.HasField('current_status') else None,
+                                'timestamp': vehicle.timestamp if vehicle.HasField('timestamp') else None
                             }
                     
                     updates.append(update)
