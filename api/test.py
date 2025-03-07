@@ -14,9 +14,8 @@ class handler(BaseHTTPRequestHandler):
 
         # Get stop data
         with open(join('gtfs', 'stops.json'), "r") as f:
-            text = f.read()
-            message2 = text
             stops = json.load(f)
+            message2 = json.dumps(stops)
 
 
         # Fetch GTFS realtime data
