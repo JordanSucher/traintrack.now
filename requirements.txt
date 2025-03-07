@@ -1,0 +1,7 @@
+psycopg2-binary
+findmy
+gtfs-realtime-bindings
+protobuf
+requests
+fastapi
+uvicorn
