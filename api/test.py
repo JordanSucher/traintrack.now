@@ -3,7 +3,7 @@ import requests
 import psycopg2
 import psycopg2.extras
 import os
-import pathlib
+from os.path import join
 import json
 from http.server import BaseHTTPRequestHandler
 
@@ -13,10 +13,7 @@ class handler(BaseHTTPRequestHandler):
     def do_GET(self):
 
         # Get stop data
-        current_dir = pathlib.Path(__file__).parent.resolve()
-        stops_data_path = pathlib.Path(current_dir, "..", "gtfs", "stops.json")
-
-        with open(stops_data_path, "r") as f:
+        with open(join('gtfs', 'stops.json'), "r") as f:
             text = f.read()
             message2 = text
             stops = json.load(f)
