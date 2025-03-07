@@ -109,4 +109,4 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-        self.wfile.write(message2.encode('utf-8'))
+        self.wfile.write(message.encode('utf-8'))
