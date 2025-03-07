@@ -3,12 +3,23 @@ import requests
 import psycopg2
 import psycopg2.extras
 import os
+import pathlib
+import json
 from http.server import BaseHTTPRequestHandler
 
 
 class handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
+
+        # Get stop data
+        current_dir = pathlib.Path(__file__).parent.resolve()
+        stops_data_path = pathlib.Path(current_dir, "..", "gtfs", "stops.json")
+
+        with open(stops_data_path, "r") as f:
+            stops = json.load(f)
+
+
         # Fetch GTFS realtime data
         MTA_FEEDS = [
             {
@@ -52,6 +63,8 @@ class handler(BaseHTTPRequestHandler):
                                 'routeId': vehicle.trip.route_id,
                                 'startTime': vehicle.trip.start_time,
                                 'startDate': vehicle.trip.start_date,
+                                'stopLat': float(stops[vehicle.stop_id]['stop_lat']),
+                                'stopLon': float(stops[vehicle.stop_id]['stop_lon']),
                                 'scheduleRelationship': vehicle.trip.schedule_relationship,
                                 'timestamp': vehicle.timestamp if vehicle.HasField('timestamp') else None,
                                 'stop_id': vehicle.stop_id if vehicle.HasField('stop_id') else None,
