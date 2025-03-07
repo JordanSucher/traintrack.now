@@ -65,7 +65,7 @@ class handler(BaseHTTPRequestHandler):
                     columns = updates[0].keys()
                     values = [[position[column] for column in columns] for position in updates]
 
-                    query = f"INSERT INTO vehicle_position ({', '.join(columns)}) VALUES %s"
+                    query = f"INSERT INTO \"VehiclePosition\" ({', '.join(columns)}) VALUES %s"
                     
                     psycopg2.extras.execute_values(cur, query, values)
 
