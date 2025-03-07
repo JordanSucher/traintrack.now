@@ -17,6 +17,8 @@ class handler(BaseHTTPRequestHandler):
         stops_data_path = pathlib.Path(current_dir, "..", "gtfs", "stops.json")
 
         with open(stops_data_path, "r") as f:
+            text = f.read()
+            message2 = text
             stops = json.load(f)
 
 
@@ -111,4 +113,4 @@ class handler(BaseHTTPRequestHandler):
         self.send_header('Content-type', 'text/html')
         self.end_headers()
 
-        self.wfile.write(message.encode('utf-8'))
+        self.wfile.write(message2.encode('utf-8'))
