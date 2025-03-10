@@ -7,7 +7,7 @@ import trainImg from '@/app/r211t.png';
 import Image from 'next/image';
 
 // Set your Mapbox access token
-mapboxgl.accessToken = process.env.MAPBOX_KEY;
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_KEY;
 
 export default function OpenGangwayTrainTracker() {
   const mapContainer = useRef(null);
