@@ -9,6 +9,7 @@ class handler(BaseHTTPRequestHandler):
         beaconId = os.environ.get("BEACON_ID")
 
         reports = fetch_reports(beaconId)
+        print("this is a test")
         print(reports)
 
         self.send_response(200)
