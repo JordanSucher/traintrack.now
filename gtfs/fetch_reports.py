@@ -5,7 +5,8 @@ from findmy import KeyPair
 from findmy.reports import RemoteAnisetteProvider
 
 # URL to (public or local) anisette server
-ANISETTE_SERVER = "https://ani.sidestore.io"
+# ANISETTE_SERVER = "https://ani.sidestore.io"
+ANISETTE_SERVER = "https://ani.npeg.us/"
 
 logging.basicConfig(level=logging.INFO)
 
@@ -119,8 +120,8 @@ def get_account_sync(anisette: BaseAnisetteProvider) -> AppleAccount:
             acc.restore(json.load(f))
     except FileNotFoundError:
         _login_sync(acc)
-        with acc_store.open("w+") as f:
-            json.dump(acc.export(), f)
+        # with acc_store.open("w+") as f:
+        #     json.dump(acc.export(), f)
 
     return acc
 
