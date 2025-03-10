@@ -81,8 +81,8 @@ def get_account_sync(anisette: BaseAnisetteProvider) -> AppleAccount:
             acc.restore(json.load(f))
     except FileNotFoundError:
         _login_sync(acc)
-        with acc_store.open("w+") as f:
-            json.dump(acc.export(), f)
+        # with acc_store.open("w+") as f:
+        #     json.dump(acc.export(), f)
 
     return acc
 
@@ -98,7 +98,7 @@ async def get_account_async(anisette: BaseAnisetteProvider) -> AsyncAppleAccount
             acc.restore(json.load(f))
     except FileNotFoundError:
         await _login_async(acc)
-        with acc_store.open("w+") as f:
-            json.dump(acc.export(), f)
+        # with acc_store.open("w+") as f:
+        #     json.dump(acc.export(), f)
 
     return acc
