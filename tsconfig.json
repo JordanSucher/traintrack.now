@@ -28,6 +28,6 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "trigger.config.ts"
-  ],
+, "app/map/page.jsx", "app/page.jsx"  ],
   "exclude": ["node_modules"]
 }

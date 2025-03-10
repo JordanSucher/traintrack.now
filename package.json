@@ -12,6 +12,7 @@
     "@prisma/client": "^6.4.1",
     "@trigger.dev/sdk": "^3.3.17",
     "gtfs-realtime-bindings": "^1.1.1",
+    "mapbox-gl": "^3.10.0",
     "next": "15.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
