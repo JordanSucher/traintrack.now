@@ -21,10 +21,11 @@ def fetch_reports(priv_key: str) -> int:
 
     # It's that simple!
     reports = acc.fetch_last_reports(key)
-    for report in sorted(reports):
+    reports = sorted(reports)
+    for report in reports:
         print(report)
 
-    return 1
+    return reports
 
 
 if __name__ == "__main__":
