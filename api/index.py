@@ -73,6 +73,7 @@ class handler(BaseHTTPRequestHandler):
             print(f"Error structuring beacon reports: {e}")
             msg = f"Error structuring beacon reports: {e}"
             msg += f"\nReport Type: {type(reports[0])}"
+            msg += f"\Report Keys: {reports[0].__dict__}"
             msg += f"\nBeacon reports: {reports}"
 
             self.send_response(500)
