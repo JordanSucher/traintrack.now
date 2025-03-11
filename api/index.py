@@ -26,32 +26,70 @@ class handler(BaseHTTPRequestHandler):
 
         #Connect to DB
         # Connect to the database once, outside the loop
-        conn = psycopg2.connect(
-            host=os.environ.get("PGHOST"),
-            database=os.environ.get("PGDATABASE"),
-            user=os.environ.get("PGUSER"),
-            password=os.environ.get("PGPASSWORD")
-        )
-        cur = conn.cursor()
+
+        try:
+            conn = psycopg2.connect(
+                host=os.environ.get("PGHOST"),
+                database=os.environ.get("PGDATABASE"),
+                user=os.environ.get("PGUSER"),
+                password=os.environ.get("PGPASSWORD")
+            )
+            cur = conn.cursor()
+        except Exception as e:
+            print(f"Error connecting to database: {e}")
+            msg = f"Error connecting to database: {e}"
+            self.send_response(500)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(msg.encode("utf-8"))
+            return
 
          #Create a fetch record
-        cur.execute("INSERT INTO \"GtfsFetch\" (\"feedName\", \"fetchTime\", \"feedTimestamp\") VALUES (%s, %s, %s) RETURNING id", ("G", "now()", "now()"))
-        fetch_id = cur.fetchone()[0]
+        
+        try: 
+            cur.execute("INSERT INTO \"GtfsFetch\" (\"feedName\", \"fetchTime\", \"feedTimestamp\") VALUES (%s, %s, %s) RETURNING id", ("G", "now()", "now()"))
+            fetch_id = cur.fetchone()[0]
+        except Exception as e:
+            print(f"Error creating fetch record: {e}")
+            msg = f"Error creating fetch record: {e}"
+            self.send_response(500)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(msg.encode("utf-8"))
+            return
 
-        structured_reports = []
-        for report in reports:
-            structured_reports.append({
-                "fetchId": fetch_id,
-                "beaconId": beaconId,
-                "hashed_adv_key": report.hashed_adv_key,
-                "timestamp": report.timestamp,
-                "latitude": report.lat,
-                "longitude": report.lon
-        })
-            
-        cur.executemany("INSERT INTO \"BeaconReport\" (\"fetchId\", \"beaconId\",\"hashedAdvKey\", timestamp, latitude, longitude) VALUES (%(hashed_adv_key)s, %(timestamp)s, %(latitude)s, %(longitude)s)", structured_reports)
+        try:
+            structured_reports = []
+            for report in reports:
+                structured_reports.append({
+                    "fetchId": fetch_id,
+                    "beaconId": beaconId,
+                    "hashed_adv_key": report.hashed_adv_key,
+                    "timestamp": report.timestamp,
+                    "latitude": report.lat,
+                    "longitude": report.lon
+            })
+        except Exception as e:
+            print(f"Error structuring beacon reports: {e}")
+            msg = f"Error structuring beacon reports: {e}"
+            self.send_response(500)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(msg.encode("utf-8"))
+            return
 
-        conn.commit()
+        try: 
+            cur.executemany("INSERT INTO \"BeaconReport\" (\"fetchId\", \"beaconId\",\"hashedAdvKey\", timestamp, latitude, longitude) VALUES (%(hashed_adv_key)s, %(timestamp)s, %(latitude)s, %(longitude)s)", structured_reports)
+
+            conn.commit()
+        except Exception as e:
+            print(f"Error inserting beacon reports: {e}")
+            msg = f"Error inserting beacon reports: {e}"
+            self.send_response(500)
+            self.send_header("Content-type", "text/plain")
+            self.end_headers()
+            self.wfile.write(msg.encode("utf-8"))
+            return
 
         latest_report = reports[0]
         now = datetime.now(ZoneInfo("US/Eastern"))
