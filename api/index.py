@@ -120,8 +120,14 @@ class handler(BaseHTTPRequestHandler):
             # If the latest report is older than 60 minutes, report beacon not functioning.
             if age > timedelta(minutes=MAX_REPORT_AGE_MIN):
                 msg = (f"Beacon not functioning: last report is older than {MAX_REPORT_AGE_MIN} minutes. "
-                    f"Last report at {latest_report["timestamp"]} (lat: {latest_report["latitude"]}, lon: {latest_report["longitude"]}).")
+                    f"Last report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']}).")
                 print(msg)
+
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(msg.encode("utf-8"))
+
                 return
 
             # Check if beacon is on the route.
@@ -129,14 +135,24 @@ class handler(BaseHTTPRequestHandler):
                 msg = (f"Beacon not functioning: location not along route. "
                     f"Latest report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']}).")
                 print(msg)
+                
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(msg.encode("utf-8"))
                 return
             
             # Check if the most recent beacon report is at a terminus.
             for term_id, (term_lat, term_lon) in TERMINUS_COORDS.items():
                 dist = haversine_distance(latest_report["latitude"], latest_report["longitude"], term_lat, term_lon)
                 if dist <= STOP_RADIUS:
-                    msg = f"Beacon is at terminus {term_id} as of {latest_report["timestamp"]}."
+                    msg = f"Beacon is at terminus {term_id} as of {latest_report['timestamp']}."
                     print(msg)
+
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/plain")
+                    self.end_headers()
+                    self.wfile.write(msg.encode("utf-8"))
                     return
                 
             # Try matching a GTFS train using the last terminus event.
@@ -152,6 +168,10 @@ class handler(BaseHTTPRequestHandler):
                 #stub - save match to db
                 cur.execute("INSERT INTO \"BeaconTripMapping\" (\"fetchId\", \"tripId\", \"beaconId\") VALUES (%s, %s, %s)", (fetch_id, matching_train.trip_id, beaconId))
 
+                self.send_response(200)
+                self.send_header("Content-type", "text/plain")
+                self.end_headers()
+                self.wfile.write(url.encode("utf-8"))
                 return
 
             # No matching train found. Report beacon details and determine nearest station & direction.
@@ -159,7 +179,7 @@ class handler(BaseHTTPRequestHandler):
             nearest_stop, distance = get_nearest_stop(latest_report["latitude"], latest_report["longitude"], stops)
             direction = get_direction_from_terminus(last_term_id) if last_term_id else "Unknown"
             msg = (f"No matching GTFS train found.\n"
-                f"Latest beacon report: {latest_report["timestamp"]} at (lat: {latest_report["latitude"]}, lon: {latest_report["longitude"]}).\n")
+                f"Latest beacon report: {latest_report['timestamp']} at (lat: {latest_report['latitude']}, lon: {latest_report['longitude']}).\n")
             if nearest_stop:
                 msg += f"Nearest station: {nearest_stop['stop_name']} (ID: {nearest_stop['stop_id']}).\n"
             msg += f"Direction inferred from last terminus ({last_term_id}): {direction}.\n"
@@ -198,6 +218,8 @@ class handler(BaseHTTPRequestHandler):
             return
 
         except Exception as e:
+            if 'msg' not in locals() or not msg:
+                msg = "An error occurred while processing the request."
             msg += f"\nError: {e}"
             print(msg)
             self.send_response(500)
@@ -205,3 +227,9 @@ class handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(msg.encode('utf-8'))
             return
+
+        finally:
+            if 'cur' in locals() and cur is not None:
+                cur.close()
+            if 'conn' in locals() and conn is not None:
+                conn.close()
