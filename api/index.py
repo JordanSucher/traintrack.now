@@ -61,14 +61,15 @@ class handler(BaseHTTPRequestHandler):
         try:
             structured_reports = []
             for report in reports:
-                structured_reports.append({
-                    "fetchId": fetch_id,
-                    "beaconId": beaconId,
-                    "hashed_adv_key": report.hashed_adv_key,
-                    "timestamp": report.timestamp,
-                    "latitude": report.lat,
-                    "longitude": report.lon
-            })
+                if hasattr(report, "hashed_adv_key"):
+                    structured_reports.append({
+                        "fetchId": fetch_id,
+                        "beaconId": beaconId,
+                        "hashed_adv_key": report.hashed_adv_key,
+                        "timestamp": report.timestamp,
+                        "latitude": report.lat,
+                        "longitude": report.lon
+                    })
         except Exception as e:
             print(f"Error structuring beacon reports: {e}")
             msg = f"Error structuring beacon reports: {e}"
