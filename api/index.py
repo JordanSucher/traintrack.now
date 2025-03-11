@@ -112,6 +112,8 @@ class handler(BaseHTTPRequestHandler):
 
         try:
             latest_report = structured_reports[0]
+            msg = (f"latest report: {latest_report}")
+            msg += f"\nLast report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']})."
             now = datetime.now(ZoneInfo("US/Eastern"))
             age = now - latest_report.timestamp.astimezone(ZoneInfo("US/Eastern"))
 
@@ -196,7 +198,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         except Exception as e:
-            msg = f"Error: {e}"
+            msg += f"\nError: {e}"
             print(msg)
             self.send_response(500)
             self.send_header('Content-type','text/plain')
