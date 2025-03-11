@@ -111,7 +111,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         try:
-            latest_report = structured_reports[0]
+            latest_report = structured_reports[-1]
             msg = (f"latest report: {latest_report}")
             msg += f"\nLast report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']})."
             now = datetime.now(ZoneInfo("US/Eastern"))
