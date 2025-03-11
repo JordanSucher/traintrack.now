@@ -116,6 +116,7 @@ def get_last_terminus_report(reports):
     Returns a tuple (report, terminus_id) if found; otherwise, None.
     """
     print(f"Scanning {len(reports)} beacon reports for a terminus event...")
+    reports = sorted(reports, key=lambda r: r.timestamp, reverse=True)
     for rep in reports:
         #print(f"Checking beacon report at {rep.timestamp} (lat: {rep.latitude}, lon: {rep.longitude})")
         for term_id, (term_lat, term_lon) in TERMINUS_COORDS.items():
