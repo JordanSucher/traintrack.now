@@ -170,6 +170,8 @@ class handler(BaseHTTPRequestHandler):
                 #stub - save match to db
                 cur.execute("INSERT INTO \"BeaconTripMapping\" (\"fetchId\", \"tripId\", \"beaconId\") VALUES (%s, %s, %s)", (fetch_id, matching_train.trip_id, beaconId))
 
+                conn.commit()
+
                 self.send_response(200)
                 self.send_header("Content-type", "text/plain")
                 self.end_headers()
