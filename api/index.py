@@ -84,7 +84,7 @@ class handler(BaseHTTPRequestHandler):
             return
 
         try: 
-            cur.executemany("INSERT INTO \"BeaconReport\" (\"fetchId\", \"beaconId\",\"hashedAdvKey\", timestamp, latitude, longitude) VALUES (%(hashed_adv_key)s, %(timestamp)s, %(latitude)s, %(longitude)s)", structured_reports)
+            cur.executemany("INSERT INTO \"BeaconReport\" (\"fetchId\", \"beaconId\",\"hashedAdvKey\", timestamp, latitude, longitude) VALUES ( %(fetchId)s, %(beaconId)s, %(hashed_adv_key)s, %(timestamp)s, %(latitude)s, %(longitude)s)", structured_reports)
 
             conn.commit()
         except Exception as e:
