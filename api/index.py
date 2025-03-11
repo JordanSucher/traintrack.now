@@ -72,7 +72,9 @@ class handler(BaseHTTPRequestHandler):
         except Exception as e:
             print(f"Error structuring beacon reports: {e}")
             msg = f"Error structuring beacon reports: {e}"
+            msg += f"\nReport Type: {type(reports[0])}"
             msg += f"\nBeacon reports: {reports}"
+
             self.send_response(500)
             self.send_header("Content-type", "text/plain")
             self.end_headers()
