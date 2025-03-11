@@ -3,3 +3,5 @@ findmy
 gtfs-realtime-bindings
 protobuf
 requests
+pytz
+nyct_gtfs

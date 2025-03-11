@@ -24,6 +24,8 @@ model GtfsFetch {
   
   // Relations
   vehiclePositions  VehiclePosition[]
+  BeaconReports     BeaconReport[]
+  BeaconTripMappings BeaconTripMapping[]
 }
 
 // For storing vehicle positions
@@ -45,9 +47,41 @@ model VehiclePosition {
   
   // Relation to the fetch record
   fetch GtfsFetch @relation(fields: [fetchId], references: [id])
-  
+
   @@index([fetchId])
   @@index([tripId])
   @@index([routeId])
   @@index([stopId])
+}
+
+
+
+// For storing beacon reports
+model BeaconReport {
+  id          Int      @id @default(autoincrement())
+  fetchId     Int      // Reference to the fetch record
+  beaconId    String   // Beacon identifier
+  hashedAdvKey String   // Hashed adv key
+  timestamp   DateTime // Moment at which the report was measured
+  latitude    Float
+  longitude   Float
+  createdAt   DateTime @default(now())
+
+  // Relation to the fetch record
+  fetch GtfsFetch @relation(fields: [fetchId], references: [id])
+
+}
+
+// For storing beacon <> mta gtfs relations
+model BeaconTripMapping {
+  id          Int      @id @default(autoincrement())
+  fetchId     Int      // Reference to the fetch record
+  tripId      String   // Trip identifier
+  beaconId    String   // Beacon identifier
+  createdAt   DateTime @default(now())
+
+  // Relation to the fetch record
+  fetch GtfsFetch @relation(fields: [fetchId], references: [id])
+
+
 }
