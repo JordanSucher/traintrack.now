@@ -115,27 +115,27 @@ class handler(BaseHTTPRequestHandler):
             msg = (f"latest report: {latest_report}")
             msg += f"\nLast report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']})."
             now = datetime.now(ZoneInfo("US/Eastern"))
-            age = now - latest_report.timestamp.astimezone(ZoneInfo("US/Eastern"))
+            age = now - latest_report["timestamp"].astimezone(ZoneInfo("US/Eastern"))
 
             # If the latest report is older than 60 minutes, report beacon not functioning.
             if age > timedelta(minutes=MAX_REPORT_AGE_MIN):
                 msg = (f"Beacon not functioning: last report is older than {MAX_REPORT_AGE_MIN} minutes. "
-                    f"Last report at {latest_report.timestamp} (lat: {latest_report.latitude}, lon: {latest_report.longitude}).")
+                    f"Last report at {latest_report["timestamp"]} (lat: {latest_report["latitude"]}, lon: {latest_report["longitude"]}).")
                 print(msg)
                 return
 
             # Check if beacon is on the route.
-            if not is_on_route(latest_report.latitude, latest_report.longitude):
+            if not is_on_route(latest_report["latitude"], latest_report["longitude"]):
                 msg = (f"Beacon not functioning: location not along route. "
-                    f"Latest report at {latest_report.timestamp} (lat: {latest_report.latitude}, lon: {latest_report.longitude}).")
+                    f"Latest report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']}).")
                 print(msg)
                 return
             
             # Check if the most recent beacon report is at a terminus.
             for term_id, (term_lat, term_lon) in TERMINUS_COORDS.items():
-                dist = haversine_distance(latest_report.latitude, latest_report.longitude, term_lat, term_lon)
+                dist = haversine_distance(latest_report["latitude"], latest_report["longitude"], term_lat, term_lon)
                 if dist <= STOP_RADIUS:
-                    msg = f"Beacon is at terminus {term_id} as of {latest_report.timestamp}."
+                    msg = f"Beacon is at terminus {term_id} as of {latest_report["timestamp"]}."
                     print(msg)
                     return
                 
@@ -156,16 +156,16 @@ class handler(BaseHTTPRequestHandler):
 
             # No matching train found. Report beacon details and determine nearest station & direction.
             stops = load_stops()
-            nearest_stop, distance = get_nearest_stop(latest_report.latitude, latest_report.longitude, stops)
+            nearest_stop, distance = get_nearest_stop(latest_report["latitude"], latest_report["longitude"], stops)
             direction = get_direction_from_terminus(last_term_id) if last_term_id else "Unknown"
             msg = (f"No matching GTFS train found.\n"
-                f"Latest beacon report: {latest_report.timestamp} at (lat: {latest_report.latitude}, lon: {latest_report.longitude}).\n")
+                f"Latest beacon report: {latest_report["timestamp"]} at (lat: {latest_report["latitude"]}, lon: {latest_report["longitude"]}).\n")
             if nearest_stop:
                 msg += f"Nearest station: {nearest_stop['stop_name']} (ID: {nearest_stop['stop_id']}).\n"
             msg += f"Direction inferred from last terminus ({last_term_id}): {direction}.\n"
 
             # If the beacon has reported a location within the last 3 minutes, try to map it further via next-stop matching.
-            if (now - latest_report.timestamp.astimezone(ZoneInfo("US/Eastern"))) <= timedelta(minutes=3):
+            if (now - latest_report["timestamp"].astimezone(ZoneInfo("US/Eastern"))) <= timedelta(minutes=3):
                 # Determine next stop based on the nearest station and direction.
                 next_stop = get_next_stop(nearest_stop["stop_id"], direction, stops)
                 if next_stop:
