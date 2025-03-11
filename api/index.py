@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from nyct_gtfs import NYCTFeed  # Using NYCTFeed from nyct_gtfs
 from gtfs.utils import load_stops, is_on_route, haversine_distance, match_gtfs_train, get_nearest_stop, get_direction_from_terminus, get_last_terminus_report, get_next_stop
 import psycopg2
+import re 
 
 class handler(BaseHTTPRequestHandler):
  
@@ -61,14 +62,28 @@ class handler(BaseHTTPRequestHandler):
         try:
             structured_reports = []
             for report in reports:
-                structured_reports.append({
-                    "fetchId": fetch_id,
-                    "beaconId": beaconId,
-                    "hashed_adv_key": report.hashed_adv_key,
-                    "timestamp": report.timestamp,
-                    "latitude": report.lat,
-                    "longitude": report.lon
-                })
+                if "KeyReport(" in str(report):
+                    # Extract data using regex
+                    report_str = str(report)
+                    hashed_key = re.search(r'hashed_adv_key=([^,]+)', report_str).group(1)
+                    timestamp_str = re.search(r'timestamp=([^,]+)', report_str).group(1)
+                    lat = float(re.search(r'lat=([^,]+)', report_str).group(1))
+                    lon = float(re.search(r'lon=([^,\)]+)', report_str).group(1))
+                    
+                    # Parse timestamp
+                    timestamp = datetime.fromisoformat(timestamp_str)
+                    
+                    report_dict = {
+                        "fetchId": fetch_id,
+                        "beaconId": beaconId,
+                        "hashed_adv_key": hashed_key,
+                        "timestamp": timestamp,
+                        "latitude": lat,
+                        "longitude": lon
+                    }
+                    structured_reports.append(report_dict)
+
+
         except Exception as e:
             print(f"Error structuring beacon reports: {e}")
             msg = f"Error structuring beacon reports: {e}"
