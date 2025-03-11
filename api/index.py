@@ -120,7 +120,9 @@ class handler(BaseHTTPRequestHandler):
             # If the latest report is older than 60 minutes, report beacon not functioning.
             if age > timedelta(minutes=MAX_REPORT_AGE_MIN):
                 msg = (f"Beacon not functioning: last report is older than {MAX_REPORT_AGE_MIN} minutes. "
-                    f"Last report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']}).")
+                    f"Last report at {latest_report['timestamp']} (lat: {latest_report['latitude']}, lon: {latest_report['longitude']})."
+                    "reports: " + str(structured_reports)
+                    )
                 print(msg)
 
                 self.send_response(200)
