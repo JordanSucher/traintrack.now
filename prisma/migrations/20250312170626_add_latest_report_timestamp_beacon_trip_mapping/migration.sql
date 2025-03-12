@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "BeaconTripMapping" ADD COLUMN     "latestBeaconReport" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

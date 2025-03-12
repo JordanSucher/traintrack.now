@@ -13,9 +13,31 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_KEY;
 export default function OpenGangwayTrainTracker() {
   const mapContainer = useRef(null);
   const map = useRef(null);
+  const [mapInit, setMapInit] = useState(false)
   const [rideId, setRideId] = useState(null);
   const [upcomingStops, setUpcomingStops] = useState([]);
-  const [stops, setStops] = useState([]);
+  const [currStop, setCurrStop] = useState(null)
+  const [stops, setStops] = useState({});
+  const [rideInfo, setRideInfo] = useState(null)
+  const animationRef = useRef(null);
+  const rideIdIntervalRef = useRef(null);
+  const geoIntervalRef = useRef(null);
+
+
+  useEffect(() => {
+    const fetchStops = async () => {
+      try {
+        const response = await fetch('/api/stops');
+        const data = await response.json();
+        setStops(data);
+      } catch (error) {
+        console.error('Error fetching stops:', error);
+      }
+    }
+
+    fetchStops();
+
+  }, [])
 
   useEffect(() => {
     // Fetch most recent ride Id and stops
@@ -29,22 +51,171 @@ export default function OpenGangwayTrainTracker() {
       } catch (error) {
         console.error('Error fetching ride ID:', error);
       }
-    }
-
-    const fetchStops = async () => {
-      try {
-        const response = await fetch('/api/stops');
-        const data = await response.json();
-        setStops(data);
-      } catch (error) {
-        console.error('Error fetching stops:', error);
-      }
-    }
-
-    fetchRideId();
-    fetchStops();
+    };
   
+    // Initial fetch
+    fetchRideId();
+    
+    // Set up polling every 30 seconds
+    rideIdIntervalRef.current = setInterval(fetchRideId, 30000);
+    
+    // Clean up on unmount
+    return () => {
+      if (rideIdIntervalRef.current) {
+        clearInterval(rideIdIntervalRef.current);
+        rideIdIntervalRef.current = null;
+      }
+    };
   }, []);
+
+  useEffect(() => {
+    // get users location and add pin to map, poll for updates
+    if (!map.current) return; // Skip if map not initialized
+    
+    // Source ID for user location
+    const userLocationSourceId = 'user-location-source';
+    const userLocationLayerId = 'user-location-layer';
+    
+    // Create references for clearing intervals and tracking state
+    const permissionDenied = { current: false };
+    const retryCount = { current: 0 };
+    const maxRetries = 3;
+    
+    // Function to get user location and update the pin
+    const updateUserLocation = () => {
+      // Skip if permission was previously denied
+      if (permissionDenied.current) return;
+      
+      if (!('geolocation' in navigator)) {
+        console.warn('Geolocation is not supported by this browser');
+        return;
+      }
+      
+      // Try with decreasing accuracy demands based on retry count
+      const highAccuracy = retryCount.current < 2;
+      
+      console.log(`Attempting to get location (retry: ${retryCount.current}, highAccuracy: ${highAccuracy})`);
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Success! Reset retry counter
+          retryCount.current = 0;
+          
+          const { latitude, longitude } = position.coords;
+          console.log('Got position:', latitude, longitude);
+          
+          // Create or update the source for user location
+          if (map.current.getSource(userLocationSourceId)) {
+            // Update existing source
+            map.current.getSource(userLocationSourceId).setData({
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [longitude, latitude]
+              },
+              properties: {
+                timestamp: new Date().toISOString()
+              }
+            });
+          } else {
+            // First time - add source and layer
+            try {
+              map.current.addSource(userLocationSourceId, {
+                type: 'geojson',
+                data: {
+                  type: 'Feature',
+                  geometry: {
+                    type: 'Point',
+                    coordinates: [longitude, latitude]
+                  },
+                  properties: {
+                    timestamp: new Date().toISOString()
+                  }
+                }
+              });
+              
+              // Add a blue dot for the user's location
+              map.current.addLayer({
+                id: userLocationLayerId,
+                type: 'circle',
+                source: userLocationSourceId,
+                paint: {
+                  'circle-radius': 8,
+                  'circle-color': '#1E88E5', // Material blue
+                  'circle-opacity': 0.8,
+                  'circle-stroke-width': 2,
+                  'circle-stroke-color': '#ffffff'
+                }
+              });
+            } catch (e) {
+              console.error('Error adding map layers:', e);
+            }
+          }
+          
+          console.log('Updated user location:', latitude, longitude);
+        },
+        (error) => {
+          console.error(`Error getting user location (code: ${error.code}):`, error.message);
+          
+          // Check error type
+          if (error.code === 1) { // PERMISSION_DENIED
+            console.warn('Geolocation permission denied. Stopping location polling.');
+            permissionDenied.current = true;
+            
+            // Clear the interval since we don't need to keep polling
+            if (geoIntervalRef.current) {
+              clearInterval(geoIntervalRef.current);
+              geoIntervalRef.current = null;
+            }
+          } else if (error.code === 3 || error.code === 2) { // TIMEOUT or POSITION_UNAVAILABLE
+            retryCount.current++;
+            
+            if (retryCount.current <= maxRetries) {
+              console.warn(`Location request failed (retry ${retryCount.current}/${maxRetries}). Trying again immediately with lower accuracy.`);
+              // Try again immediately with lower standards
+              setTimeout(updateUserLocation, 500);
+            } else {
+              console.warn(`Exceeded max retries (${maxRetries}). Will try again on next polling cycle.`);
+              retryCount.current = 0; // Reset for next polling cycle
+            }
+          }
+        },
+        {
+          enableHighAccuracy: highAccuracy,
+          timeout: highAccuracy ? 5000 : 15000,  // Shorter timeout for high accuracy attempts
+          maximumAge: 30000 // Accept locations up to 30 seconds old
+        }
+      );
+    };
+    
+    // Initial location fetch - delay slightly to ensure map is fully initialized
+    setTimeout(updateUserLocation, 1000);
+    
+    // Set up polling (every 30 seconds)
+    geoIntervalRef.current = setInterval(updateUserLocation, 30000);
+    
+    // Clean up on unmount
+    return () => {
+      if (geoIntervalRef.current) {
+        clearInterval(geoIntervalRef.current);
+      }
+      
+      // Remove layers and sources
+      if (map.current) {
+        try {
+          if (map.current.getLayer(userLocationLayerId)) {
+            map.current.removeLayer(userLocationLayerId);
+          }
+          if (map.current.getSource(userLocationSourceId)) {
+            map.current.removeSource(userLocationSourceId);
+          }
+        } catch (e) {
+          console.error('Error cleaning up map resources:', e);
+        }
+      }
+    };
+  }, [mapInit]); // Depends on mapInit instead of map reference
+
 
   useEffect(() => {
     // Fetch mta gtfs data
@@ -52,11 +223,18 @@ export default function OpenGangwayTrainTracker() {
       const response = await fetch("https://www.goodservice.io/api/routes/?detailed=1")
       let data = await response.json()
       data = data.routes.G.trips
-      data = [...data.north, ...data.south]
+      data = [...data.north.map(trip => ({...trip, direction: "north"})), ...data.south.map(trip => ({...trip, direction: "south"}))]
       
       let actualTripUpdate = data.filter(trip => trip.id == rideId[0].tripId)
-      actualTripUpdate = actualTripUpdate.length > 0 ? actualTripUpdate[0] : null
-      let randomTripUpdate = data[0]
+      let tempRideInfo
+
+      if (actualTripUpdate.length > 0) {
+        tempRideInfo = actualTripUpdate[0]
+      } else {
+        tempRideInfo = data[0]
+      }
+
+      setRideInfo(tempRideInfo)
 
       let stopTimes = []
 
@@ -77,17 +255,21 @@ export default function OpenGangwayTrainTracker() {
         return `${hours12}:${minutes} ${period}`;
       }
 
-      Object.entries(randomTripUpdate.stops).forEach(entry => {
+      Object.entries(tempRideInfo.stops).forEach(entry => {
         stopTimes.push({
           stopId: entry[0],
           stopName: stops[entry[0]]?.stop_name,
           stopEpoch: entry[1],
-          stopTime: convertTo12Hour(new Date(entry[1]).toTimeString().split(' ')[0])
+          stopTimeRaw: new Date(entry[1] * 1000).toTimeString(),
+          stopTime: convertTo12Hour(new Date(entry[1] * 1000).toTimeString().split(' ')[0])
         })
       })
       
       let futureStopTimes = stopTimes.filter(stopTime => stopTime.stopEpoch > (new Date().getTime() / 1000))
+      let currStopTime = stopTimes.filter(stopTime => stopTime.stopEpoch <= (new Date().getTime() / 1000)).at(-1)
+      setCurrStop(currStopTime)
 
+      console.log("currStop", currStopTime)
       console.log("futureStopTimes", futureStopTimes)
 
       setUpcomingStops(futureStopTimes)
@@ -98,6 +280,117 @@ export default function OpenGangwayTrainTracker() {
 
   }, [rideId, stops]);
 
+  useEffect(()=> {
+    // centers the map on the current station
+    if (!map.current) return; // skip if map not initialized
+    
+    let currLatLong 
+    
+    console.log("stops length", Object.keys(stops).length)
+    console.log("currStop", currStop)
+    console.log("upcomingStops[0]", upcomingStops[0])
+    
+    if (currStop && Object.keys(stops).length > 0) {
+      console.log("setting currLatLong 1")
+      currLatLong = {
+        lat: stops[currStop.stopId].stop_lat,
+        lon: stops[currStop.stopId].stop_lon,
+      }
+    } else if (upcomingStops[0] && Object.keys(stops).length > 0) {
+      console.log("setting currLatLong 2")
+      currLatLong = {
+        lat: stops[upcomingStops[0].stopId].stop_lat,
+        lon: stops[upcomingStops[0].stopId].stop_lon,
+      }
+    }
+    
+    console.log("currLatLong", currLatLong)
+    
+    // If we have coordinates, center map and add pulsing effect
+    if (currLatLong) {
+      // Center the map
+      map.current.flyTo({
+        center: [currLatLong.lon, currLatLong.lat],
+        zoom: 14,
+        essential: true
+      });
+      
+      // Remove any existing pulse animation (if it exists)
+      if (map.current.getLayer('pulse-outer')) map.current.removeLayer('pulse-outer');
+      if (map.current.getLayer('pulse-inner')) map.current.removeLayer('pulse-inner');
+      if (map.current.getSource('pulse-point')) map.current.removeSource('pulse-point');
+      
+      // Add the pulsing dot for current station
+      const pulsePointSource = {
+        'type': 'geojson',
+        'data': {
+          'type': 'Feature',
+          'geometry': {
+            'type': 'Point',
+            'coordinates': [currLatLong.lon, currLatLong.lat]
+          },
+          'properties': {}
+        }
+      };
+      
+      map.current.addSource('pulse-point', pulsePointSource);
+      
+      // Add the outer pulsing circle
+      map.current.addLayer({
+        'id': 'pulse-outer',
+        'type': 'circle',
+        'source': 'pulse-point',
+        'paint': {
+          'circle-radius': ['interpolate', ['linear'], ['get', 'pulse', ['literal', { 'pulse': 0 }]], 0, 15, 1, 25],
+          'circle-color': '#6CBE45',
+          'circle-opacity': ['interpolate', ['linear'], ['get', 'pulse', ['literal', { 'pulse': 0 }]], 0, 0.6, 1, 0],
+          'circle-stroke-width': 1,
+          'circle-stroke-color': '#fff'
+        }
+      });
+      
+      // Add the inner circle for the station
+      map.current.addLayer({
+        'id': 'pulse-inner',
+        'type': 'circle',
+        'source': 'pulse-point',
+        'paint': {
+          'circle-radius': 6,
+          'circle-color': '#6CBE45',
+          'circle-opacity': 0.8,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#fff'
+        }
+      });
+      
+      // Create the pulse animation
+      let pulseStart = Date.now();
+      const animatePulse = () => {
+        // Calculate the pulse progress (0 to 1 every 1500ms)
+        const pulseProgress = (Date.now() - pulseStart) % 2500 / 2500;
+        
+        // Update the pulse property that drives the animation
+        map.current.setPaintProperty('pulse-outer', 'circle-radius', 
+          ['interpolate', ['linear'], pulseProgress, 0, 15, 1, 25]);
+        map.current.setPaintProperty('pulse-outer', 'circle-opacity', 
+          ['interpolate', ['linear'], pulseProgress, 0, 0.6, 1, 0]);
+        
+        // Request the next animation frame
+        animationRef.current = requestAnimationFrame(animatePulse);
+      };
+      
+      // Start the animation
+      animationRef.current = requestAnimationFrame(animatePulse);
+      
+      // Cleanup function to stop animation when component unmounts or dependencies change
+      return () => {
+        if (animationRef.current) {
+          cancelAnimationFrame(animationRef.current);
+        }
+      };
+    }
+  }, [currStop, upcomingStops, stops]);
+
   useEffect(() => {
     if (map.current) return; // Skip if map is already initialized
 
@@ -106,7 +399,7 @@ export default function OpenGangwayTrainTracker() {
       container: mapContainer.current,
       style: 'mapbox://styles/mapbox/light-v11',
       center: [-73.953522, 40.689627], // Longitude, Latitude for Bedford–Nostrand Av
-      zoom: 13,
+      zoom: 14,
       antialias: true,
       interactive: false,
       preserveDrawingBuffer: true,
@@ -216,7 +509,10 @@ export default function OpenGangwayTrainTracker() {
         }
       });
       
+      setMapInit(true)
+
     });
+
 
     // Clean up on unmount
     return () => map.current.remove();
@@ -231,39 +527,40 @@ export default function OpenGangwayTrainTracker() {
       </header>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto mt-5 px-4 py-4 h-full w-full text-stone-600">
-        <p className="text-4xl w-2xl font-extrabold mb-4">
-          The R211T is heading south from Bedford-Nostrand Av <strong>G</strong>
-        </p>
+        <div className={`max-w-7xl mx-auto mt-5 px-4 py-4 h-full w-full text-stone-600 ${rideInfo ? 'z-10' : '-z-10'}`}>
+          <p className="text-5xl max-w-2xl font-[1000]">
+            {`The R211T is heading ${rideInfo ? rideInfo.direction : ""} 
+            ${upcomingStops[0] && (upcomingStops[0].stopName == "Church Av" || upcomingStops[0].stopName == "Court Square") ? 'from' : 'to'} ${upcomingStops[0] ? upcomingStops[0].stopName : ""} `}
+          </p>
 
-        {/* Content Row */}
-        <div className="relative gap-3 w-full h-8/10 mt-4 rounded">
-     
+          {/* Content Row */}
+          <div className="relative gap-3 w-full h-8/10 mt-4 rounded">
+      
 
-          {/* Times List */}
-          <div className="absolute top-3 left-3 w-3/10 h-1/2 rounded p-4 bg-white z-20">
-            <h3 className="font-bold text-lg mt-0 mb-2">Upcoming Stops</h3>
-            <div className="h-9/10 overflow-y-auto">
-              <ul className="list-none p-0">
-                {upcomingStops.map((stop, index) => (
-                    <li key={index} className="my-2">
-                      {stop.stopName} - {stop.stopTime}
-                    </li>
-                  ))
-                }
-              </ul>
+            {/* Times List */}
+            <div className="absolute top-3 left-3 w-3/10 h-1/2 rounded p-4 bg-white z-20">
+              <h3 className="font-bold text-lg mt-0 mb-2">Upcoming Stops</h3>
+              <div className="max-h-8/10 overflow-auto">
+                <ul className="list-none p-0">
+                  {upcomingStops.map((stop, index) => (
+                      <li key={index} className="my-2">
+                        {stop.stopName} - {stop.stopTime}
+                      </li>
+                    ))
+                  }
+                </ul>
+              </div>
             </div>
-          </div>
 
-          {/* Map Container */}
-          <div 
-            ref={mapContainer} 
-            className="absolute inset-0 rounded z-10"
-          >
-          </div>
+            {/* Map Container */}
+            <div 
+              ref={mapContainer} 
+              className="absolute inset-0 rounded z-10 max-h-9/10"
+            >
+            </div>
 
+          </div>
         </div>
-      </div>
 
       {/* Footer */}
       <footer className="text-center p-4 text-sm text-gray-600">

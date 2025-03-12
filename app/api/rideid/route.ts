@@ -10,7 +10,7 @@ export async function GET() {
 
     const beacons = await prisma.beaconTripMapping.findMany({
         orderBy: {
-          createdAt: "desc",
+          latestBeaconReport: "desc",
         },
         take: 1,
       });

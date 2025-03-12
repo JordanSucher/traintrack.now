@@ -78,6 +78,7 @@ model BeaconTripMapping {
   fetchId     Int      // Reference to the fetch record
   tripId      String   // Trip identifier
   beaconId    String   // Beacon identifier
+  latestBeaconReport  DateTime @default(now()) // most recent beacon report
   createdAt   DateTime @default(now())
 
   // Relation to the fetch record
