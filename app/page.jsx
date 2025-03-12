@@ -5,6 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import geojson from '@/gtfs/g_shapes.json';
 import trainImg from '@/app/r211t.png';
 import Image from 'next/image';
+import GtfsRealtimeBindings from "gtfs-realtime-bindings";
 
 // Set your Mapbox access token
 mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_KEY;
@@ -12,7 +13,90 @@ mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_KEY;
 export default function OpenGangwayTrainTracker() {
   const mapContainer = useRef(null);
   const map = useRef(null);
-  const [mapLoaded, setMapLoaded] = useState(false);
+  const [rideId, setRideId] = useState(null);
+  const [upcomingStops, setUpcomingStops] = useState([]);
+  const [stops, setStops] = useState([]);
+
+  useEffect(() => {
+    // Fetch most recent ride Id and stops
+
+    const fetchRideId = async () => {
+      try {
+        const response = await fetch('/api/rideid');
+        const data = await response.json();
+        setRideId(data);
+        console.log("rideId mapping:", data);
+      } catch (error) {
+        console.error('Error fetching ride ID:', error);
+      }
+    }
+
+    const fetchStops = async () => {
+      try {
+        const response = await fetch('/api/stops');
+        const data = await response.json();
+        setStops(data);
+      } catch (error) {
+        console.error('Error fetching stops:', error);
+      }
+    }
+
+    fetchRideId();
+    fetchStops();
+  
+  }, []);
+
+  useEffect(() => {
+    // Fetch mta gtfs data
+    const fetchUpdates = async () => {
+      const response = await fetch("https://www.goodservice.io/api/routes/?detailed=1")
+      let data = await response.json()
+      data = data.routes.G.trips
+      data = [...data.north, ...data.south]
+      
+      let actualTripUpdate = data.filter(trip => trip.id == rideId[0].tripId)
+      actualTripUpdate = actualTripUpdate.length > 0 ? actualTripUpdate[0] : null
+      let randomTripUpdate = data[0]
+
+      let stopTimes = []
+
+      function convertTo12Hour(time24) {
+        const [hours, minutes] = time24.split(':');
+        let period = 'AM';
+        let hours12 = parseInt(hours, 10);
+      
+        if (hours12 >= 12) {
+          period = 'PM';
+          if (hours12 > 12) {
+            hours12 -= 12;
+          }
+        } else if (hours12 === 0) {
+          hours12 = 12;
+        }
+      
+        return `${hours12}:${minutes} ${period}`;
+      }
+
+      Object.entries(randomTripUpdate.stops).forEach(entry => {
+        stopTimes.push({
+          stopId: entry[0],
+          stopName: stops[entry[0]]?.stop_name,
+          stopEpoch: entry[1],
+          stopTime: convertTo12Hour(new Date(entry[1]).toTimeString().split(' ')[0])
+        })
+      })
+      
+      let futureStopTimes = stopTimes.filter(stopTime => stopTime.stopEpoch > (new Date().getTime() / 1000))
+
+      console.log("futureStopTimes", futureStopTimes)
+
+      setUpcomingStops(futureStopTimes)
+
+    }
+
+    if (rideId && Object.keys(stops).length > 0) fetchUpdates()
+
+  }, [rideId, stops]);
 
   useEffect(() => {
     if (map.current) return; // Skip if map is already initialized
@@ -36,7 +120,6 @@ export default function OpenGangwayTrainTracker() {
 
     // Handle map load event
     map.current.on('load', function() {
-      setMapLoaded(true);
       
       // Fetch G train route data
       map.current.addSource('g-train-route', {
@@ -158,14 +241,18 @@ export default function OpenGangwayTrainTracker() {
      
 
           {/* Times List */}
-          <div className="absolute top-3 left-3 w-3/10 h-fit rounded p-4 bg-white z-20">
+          <div className="absolute top-3 left-3 w-3/10 h-1/2 rounded p-4 bg-white z-20">
             <h3 className="font-bold text-lg mt-0 mb-2">Upcoming Stops</h3>
-            <ul className="list-none p-0">
-              <li className="my-2">Classon Av – 12:05pm</li>
-              <li className="my-2">Clinton-Washington Avs – 12:09pm</li>
-              <li className="my-2">Fulton St – 12:13pm</li>
-              <li className="my-2">Hoyt-Schermerhorn – 12:18pm</li>
-            </ul>
+            <div className="h-9/10 overflow-y-auto">
+              <ul className="list-none p-0">
+                {upcomingStops.map((stop, index) => (
+                    <li key={index} className="my-2">
+                      {stop.stopName} - {stop.stopTime}
+                    </li>
+                  ))
+                }
+              </ul>
+            </div>
           </div>
 
           {/* Map Container */}
