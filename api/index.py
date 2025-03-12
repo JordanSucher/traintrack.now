@@ -81,7 +81,9 @@ class handler(BaseHTTPRequestHandler):
 
                     # process latest report 
                     if structured_reports:
-                        latest_report = structured_reports[-1]
+                        sorted_reports = sorted(structured_reports, key=lambda r: r["timestamp"], reverse=True)
+
+                        latest_report = sorted_reports[0]
 
                         beacon_result["timestamp"] = latest_report["timestamp"].isoformat()
                         beacon_result["location"] = {

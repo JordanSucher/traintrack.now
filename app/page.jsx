@@ -230,11 +230,9 @@ export default function OpenGangwayTrainTracker() {
 
       if (actualTripUpdate.length > 0) {
         tempRideInfo = actualTripUpdate[0]
-      } else {
-        tempRideInfo = data[0]
-      }
+        setRideInfo(tempRideInfo)
+      } 
 
-      setRideInfo(tempRideInfo)
 
       let stopTimes = []
 

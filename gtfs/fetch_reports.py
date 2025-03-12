@@ -22,6 +22,7 @@ def fetch_reports(priv_key: str) -> int:
     # It's that simple!
     reports = acc.fetch_last_reports(key)
     reports = sorted(reports)
+    reports = reports[-200:] if len(reports) > 200 else reports
     for report in reports:
         print(report)
 
