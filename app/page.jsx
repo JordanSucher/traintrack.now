@@ -226,7 +226,7 @@ export default function OpenGangwayTrainTracker() {
       data = [...data.north.map(trip => ({...trip, direction: "north"})), ...data.south.map(trip => ({...trip, direction: "south"}))]
       
       let actualTripUpdate = data.filter(trip => trip.id == rideId[0].tripId)
-      let tempRideInfo
+      let tempRideInfo = {}
 
       if (actualTripUpdate.length > 0) {
         tempRideInfo = actualTripUpdate[0]
@@ -253,25 +253,28 @@ export default function OpenGangwayTrainTracker() {
         return `${hours12}:${minutes} ${period}`;
       }
 
-      Object.entries(tempRideInfo.stops).forEach(entry => {
-        stopTimes.push({
-          stopId: entry[0],
-          stopName: stops[entry[0]]?.stop_name,
-          stopEpoch: entry[1],
-          stopTimeRaw: new Date(entry[1] * 1000).toTimeString(),
-          stopTime: convertTo12Hour(new Date(entry[1] * 1000).toTimeString().split(' ')[0])
-        })
-      })
-      
-      let futureStopTimes = stopTimes.filter(stopTime => stopTime.stopEpoch > (new Date().getTime() / 1000))
-      let currStopTime = stopTimes.filter(stopTime => stopTime.stopEpoch <= (new Date().getTime() / 1000)).at(-1)
-      setCurrStop(currStopTime)
+      if (tempRideInfo && Object.entries(tempRideInfo).length > 0) {
 
-      console.log("currStop", currStopTime)
-      console.log("futureStopTimes", futureStopTimes)
+          Object.entries(tempRideInfo.stops).forEach(entry => {
+          stopTimes.push({
+            stopId: entry[0],
+            stopName: stops[entry[0]]?.stop_name,
+            stopEpoch: entry[1],
+            stopTimeRaw: new Date(entry[1] * 1000).toTimeString(),
+            stopTime: convertTo12Hour(new Date(entry[1] * 1000).toTimeString().split(' ')[0])
+            })
+          })
+        
+        let futureStopTimes = stopTimes.filter(stopTime => stopTime.stopEpoch > (new Date().getTime() / 1000))
+        let currStopTime = stopTimes.filter(stopTime => stopTime.stopEpoch <= (new Date().getTime() / 1000)).at(-1)
+        setCurrStop(currStopTime)
 
-      setUpcomingStops(futureStopTimes)
+        console.log("currStop", currStopTime)
+        console.log("futureStopTimes", futureStopTimes)
 
+        setUpcomingStops(futureStopTimes)
+
+      }
     }
 
     if (rideId && Object.keys(stops).length > 0) fetchUpdates()
@@ -525,6 +528,12 @@ export default function OpenGangwayTrainTracker() {
       </header>
 
       {/* Main Content */}
+        <div className={`absolute top-30 left-10 max-w-7xl mx-auto mt-5 px-4 py-4 h-full w-full text-stone-600 ${rideInfo ? 'hidden' : ''}`}>
+          <p>
+            Sorry :(
+          </p>
+        </div>
+
         <div className={`max-w-7xl mx-auto mt-5 px-4 py-4 h-full w-full text-stone-600 ${rideInfo ? 'z-10' : '-z-10'}`}>
           <p className="text-5xl max-w-2xl font-[1000]">
             {`The R211T is heading ${rideInfo ? rideInfo.direction : ""} 
