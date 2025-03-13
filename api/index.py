@@ -42,13 +42,16 @@ class handler(BaseHTTPRequestHandler):
             cur.execute("INSERT INTO \"GtfsFetch\" (\"feedName\", \"fetchTime\", \"feedTimestamp\") VALUES (%s, %s, %s) RETURNING id", ("G", "now()", "now()"))
             fetch_id = cur.fetchone()[0]
 
+            all_reports = fetch_reports(beaconIds)
+
+
             # for each beacon, get reports and push to DB
             for beaconId in beaconIds:
                 beacon_result = {}  # Dictionary to store results for this beacon
                 beacon_result["beaconId"] = beaconId
                 
                 try:
-                    reports = fetch_reports(beaconId)
+                    reports = all_reports[beaconId]
                     
                     structured_reports = []
                     

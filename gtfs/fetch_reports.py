@@ -3,6 +3,8 @@ import sys
 
 from findmy import KeyPair
 from findmy.reports import RemoteAnisetteProvider
+from collections.abc import MutableSequence
+
 
 # URL to (public or local) anisette server
 # ANISETTE_SERVER = "https://ani.sidestore.io"
@@ -11,20 +13,22 @@ ANISETTE_SERVER = "https://ani.npeg.us/"
 logging.basicConfig(level=logging.INFO)
 
 
-def fetch_reports(priv_key: str) -> int:
-    key = KeyPair.from_b64(priv_key)
+def fetch_reports(priv_keys: MutableSequence[str]) -> int:
+
     acc = get_account_sync(
         RemoteAnisetteProvider(ANISETTE_SERVER),
     )
 
     print(f"Logged in as: {acc.account_name} ({acc.first_name} {acc.last_name})")
+    
+    reports = {}
 
-    # It's that simple!
-    reports = acc.fetch_last_reports(key)
-    reports = sorted(reports)
-    reports = reports[-200:] if len(reports) > 200 else reports
-    for report in reports:
-        print(report)
+    for priv_key in priv_keys:
+        key = KeyPair.from_b64(priv_key)
+        temp_reports = acc.fetch_last_reports(key)
+        temp_reports = sorted(temp_reports)
+        temp_reports = temp_reports[-200:] if len(temp_reports) > 200 else temp_reports
+        reports[key] = temp_reports
 
     return reports
 
