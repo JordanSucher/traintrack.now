@@ -292,7 +292,7 @@ export default function OpenGangwayTrainTracker() {
       interactive: true,
       preserveDrawingBuffer: true,
       attributionControl: false,
-      bearing: 0,
+      bearing: 29,
       pitch: 0
     });
 
@@ -353,6 +353,7 @@ export default function OpenGangwayTrainTracker() {
         id: 'stations-layer',
         type: 'circle',
         source: 'stations',
+        minzoom: 12,
         paint: {
           'circle-radius': 5,
           'circle-color': '#000',
@@ -366,6 +367,7 @@ export default function OpenGangwayTrainTracker() {
         id: 'station-labels',
         type: 'symbol',
         source: 'stations',
+        minzoom: 12,
         layout: {
           'text-field': ['get', 'name'],
           'text-offset': [1, 1],
@@ -410,7 +412,7 @@ export default function OpenGangwayTrainTracker() {
       if (currLatLong) {
         // Create a container for the marker
         const markerContainer = document.createElement('div');
-        markerContainer.className = 'relative w-[40px] h-[40px]';
+        markerContainer.className = 'relative w-[80px] h-[80px]';
 
         // Create the ping element (the animated stroke)
         const pingEl = document.createElement('div');
@@ -420,7 +422,7 @@ export default function OpenGangwayTrainTracker() {
 
         // Create the actual pin element
         const pinEl = document.createElement('div');
-        pinEl.className = 'relative z-10 w-[40px] h-[40px]';
+        pinEl.className = 'relative z-10 w-[80px] h-[80px]';
         pinEl.style.backgroundImage = `url(${mapPinC.src})`;
         pinEl.style.backgroundSize = 'contain';
         pinEl.style.backgroundRepeat = 'no-repeat';
