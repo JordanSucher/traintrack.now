@@ -5,7 +5,7 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css'; // Import Mapbox default CSS
 import geojson from '@/gtfs/g_shapes.json';
 import geojsonC from '@/gtfs/c_shapes.json';
-import stationsData from '@/gtfs/stations_data.json';
+import stationsData from '@/gtfs/stations_data_local.json';
 import mapPinC from '@/app/custom-pin-c.png';
 
 // Set your Mapbox access token
