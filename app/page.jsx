@@ -156,18 +156,22 @@ export default function OpenGangwayTrainTracker() {
             markerContainer.appendChild(pinEl);
 
             // Determine the stop name to display
-            const displayStopName = currentStop
-              ? stops[currentStop.stopId]?.stop_name
-              : (futureStops.length > 0 && stops[futureStops[0].stopId]
-                  ? stops[futureStops[0].stopId].stop_name
-                  : '');
+			const displayStopName = futureStops.length > 0 
+			  ? stops[futureStops[0].stopId]?.stop_name 
+			  : "";
 
+            // Determine the next stop time to display
+			const displayStopTime = futureStops.length > 0 
+			  ? futureStops[0].stopEpoch 
+			  : "now";
+			  
             // Add click event listener to update the overlay text
             markerContainer.addEventListener('click', () => {
               setSelectedBeacon({
                 beaconId: beacon.beaconId,
                 direction: tripInfo.direction,
                 stopName: displayStopName,
+                stopTime: displayStopTime,
                 tripId: beacon.tripId,
 				latestBeaconReport: beacon.latestBeaconReport
               });
@@ -178,13 +182,18 @@ export default function OpenGangwayTrainTracker() {
               trainMarkers.current[beacon.beaconId].setLngLat([currLatLong.lon, currLatLong.lat]);
             } else {
               console.log(`Creating marker for beacon ${beacon.beaconId}`);
-              trainMarkers.current[beacon.beaconId] = new mapboxgl.Marker({
-                element: markerContainer,
-                anchor: 'bottom',
-                offset: [0, 30]
-              })
+  const marker = new mapboxgl.Marker({
+    element: markerContainer,
+    anchor: 'bottom',
+    offset: [0, 30]
+  })
                 .setLngLat([currLatLong.lon, currLatLong.lat])
                 .addTo(map.current);
+                  trainMarkers.current[beacon.beaconId] = {
+    marker,
+    pingEl, // reference to the ping element
+  };
+
             }
           }
         });
@@ -197,6 +206,20 @@ export default function OpenGangwayTrainTracker() {
     const gtfsInterval = setInterval(fetchGTFSUpdates, 30000);
     return () => clearInterval(gtfsInterval);
   }, [beaconData, stops]);
+
+useEffect(() => {
+  // When selectedBeacon changes, update the ping element for each marker.
+  Object.keys(trainMarkers.current).forEach(beaconId => {
+    const markerObj = trainMarkers.current[beaconId];
+    if (markerObj && markerObj.pingEl) {
+      // Show ping element only if this marker is selected.
+      markerObj.pingEl.style.display =
+        selectedBeacon && selectedBeacon.beaconId === beaconId
+          ? "block"
+          : "none";
+    }
+  });
+}, [selectedBeacon]);
 
   // Initialize Mapbox map and add static sources/layers
   useEffect(() => {
@@ -353,29 +376,33 @@ const selectedBulletColor =
       <div ref={mapContainer} style={{ height: '100%', width: '100%' }} />
 
     {/* Overlay text */}
-    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/75 text-black p-4 w-2/5 rounded mx-auto max-w-2xl border border-gray-300">
+    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/75 text-black p-4 w-3/6 sm:w-4/9 rounded mx-auto max-w-2xl border border-gray-300">
       {selectedBeacon ? (
         <>
-          <p className="text-sm sm:text-base sm:text-3xl md:text-4xl lg:text-6xl">
+          <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl">
             This <strong>R211T</strong> is heading{' '}
             <strong className="font-bold">{selectedBeacon.direction}</strong> to:
           </p>
 
-          <div className="relative inline-flex items-center bg-black text-white mx-auto max-w-lg px-4 py-2 w-4/5 mt-2 mb-2">
+          <div className="relative inline-flex items-center bg-black text-white mx-auto max-w-lg px-4 py-2 w-4/5 md:w-4/6 mt-2 mb-2">
             <span className="absolute top-3 sm:top-4 left-0 w-full h-0.25 bg-white"></span>
             <div className="flex justify-between items-center relative w-full">
-              <span className="text-left font-bold text-sm sm:text-base sm:text-3xl md:text-2xl lg:text-3xl">
+              <span className="text-left font-bold text-md text-base sm:text-xl md:text-xl lg:text-2xl sm:mt-3">
                 {selectedBeacon.stopName}
               </span>
               <span
-                className="inline-flex items-center justify-center h-4 w-4 sm:h-6 sm:w-6 md:h-10 md:w-10 lg:h-12 lg:w-12 rounded-full text-white font-bold text-sm sm:text-base sm:text-2xl md:text-2xl lg:text-4xl mt-4"
+                className="inline-flex items-center justify-center h-6 w-6 sm:h-6 sm:w-6 md:h-10 md:w-10 lg:h-12 lg:w-12 rounded-full text-white font-bold text-sm sm:text-base sm:text-2xl md:text-2xl lg:text-4xl mt-3 md:mt-4"
                 style={{ backgroundColor: selectedBulletColor }}
               >
                 {selectedModeLetter}
               </span>
             </div>
           </div>
-<p className="text-sm sm:text-base sm:text-lg md:text-1xl lg:text-2xl">as of <strong>{new Date(selectedBeacon.latestBeaconReport).toLocaleTimeString()}</strong>
+<p className="text-lg sm:text-base sm:text-lg md:text-1xl lg:text-2xl">as of{" "}
+  <strong>
+    {selectedBeacon.stopTime !== "now"
+      ? new Date(selectedBeacon.stopTime * 1000).toLocaleTimeString()
+      : "now"}  </strong>
         </p>
         </>
       ) : (

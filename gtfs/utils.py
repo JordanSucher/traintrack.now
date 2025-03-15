@@ -12,13 +12,19 @@ MATCH_WINDOW_SEC = 180  # ±3 minutes for matching departure time
 
 ANISETTE_SERVER = "https://ani.npeg.us"
 
-TERMINUS_COORDS = {
+# Terminus coordinates for G and C trains.
+TERMINUS_COORDS_G = {
     "F27": (40.644041, -73.979678),  # Church Av (south terminus)
     "G22": (40.746554, -73.943832)   # Court Sq (north terminus)
 }
 
-# Known stop sequence for the G train route.
-STOP_SEQUENCE = [
+TERMINUS_COORDS_C = {
+    "A09": (40.840719, -73.939561),  # 168 St (north terminus)
+    "A55": (40.675377, -73.872106)   # Euclid Av (south terminus)
+}
+
+# Stop sequences for G and C trains.
+STOP_SEQUENCE_G = [
     "G22",  # Court Sq (north terminus)
     "G24",  # 21 St
     "G26",  # Greenpoint Av
@@ -42,9 +48,60 @@ STOP_SEQUENCE = [
     "F27"   # Church Av (south terminus)
 ]
 
-# File paths
-STOPS_FILE = "gtfs/g_stops.csv"
-SHAPES_FILE = "gtfs/g_shapes.csv"
+STOP_SEQUENCE_C = [
+    "A09",  # 168 St
+    "A10",  # 163 St-Amsterdam Av
+    "A11",  # 155 St
+    "A12",  # 145 St
+    "A14",  # 135 St
+    "A15",  # 125 St
+    "A16",  # 116 St
+    "A17",  # Cathedral Pkwy (110 St)
+    "A18",  # 103 St
+    "A19",  # 96 St
+    "A20",  # 86 St
+    "A21",  # 81 St-Museum of Natural History
+    "A22",  # 72 St
+    "A24",  # 59 St-Columbus Circle
+    "A25",  # 50 St
+    "A27",  # 42 St-Port Authority Bus Terminal
+    "A28",  # 34 St-Penn Station
+    "A30",  # 23 St
+    "A31",  # 14 St
+    "A32",  # W 4 St-Wash Sq
+    "A33",  # Spring St
+    "A34",  # Canal St
+    "A36",  # Chambers St
+    "A38",  # Fulton St
+    "A40",  # High St
+    "A41",  # Jay St-MetroTech
+    "A42",  # Hoyt-Schermerhorn Sts
+    "A43",  # Lafayette Av
+    "A44",  # Clinton-Washington Avs
+    "A45",  # Franklin Av
+    "A46",  # Nostrand Av
+    "A47",  # Kingston-Throop Avs
+    "A48",  # Utica Av
+    "A49",  # Ralph Av
+    "A50",  # Rockaway Av
+    "A51",  # Broadway Junction
+    "A52",  # Liberty Av
+    "A53",  # Van Siclen Av
+    "A54",  # Shepherd Av
+    "A55"   # Euclid Av
+]
+
+# Expected terminus mapping for determining the expected destination stop in the GTFS feed.
+EXPECTED_TERMINI = {
+    "G": {
+        "G22": "F27S",  # If departed from Court Sq (north), heading southbound, expected terminus is Church Av.
+        "F27": "G22N"   # If departed from Church Av (south), expected terminus is Court Sq.
+    },
+    "C": {
+        "A09": "A55S",  # If departed from 168 St (north), heading southbound, expected terminus is Euclid Av.
+        "A55": "A09N"   # If departed from Euclid Av (south), expected terminus is 168 St.
+    }
+}
 
 def haversine_distance(lat1, lon1, lat2, lon2):
     """Calculate the great-circle distance (in meters) between two lat/lon points."""
@@ -57,8 +114,9 @@ def haversine_distance(lat1, lon1, lat2, lon2):
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
     return R * c
 
-def load_stops(filename=STOPS_FILE):
-    """Load stops from stops.txt."""
+def load_stops(line="G"):
+    """Load stops from the stops file for the specified line (G or C)."""
+    filename = f"gtfs/{line.lower()}_stops.csv"
     stops = []
     try:
         with open(filename, newline="") as csvfile:
@@ -71,11 +129,12 @@ def load_stops(filename=STOPS_FILE):
                     "lon": float(row["stop_lon"])
                 })
     except Exception as e:
-        print(f"Error loading stops: {e}")
+        print(f"Error loading stops from {filename}: {e}")
     return stops
 
-def load_g_shapes(filename=SHAPES_FILE):
-    """Load shape points from g_shapes.csv. Returns a list of dicts."""
+def load_shapes(line="G"):
+    """Load shape points from shapes.csv. Returns a list of dicts."""
+    filename = f"gtfs/{line.lower()}_shapes.csv"
     shapes = []
     try:
         with open(filename, newline="") as csvfile:
@@ -91,12 +150,15 @@ def load_g_shapes(filename=SHAPES_FILE):
         print(f"Error loading shapes: {e}")
     return shapes
 
-def is_on_route(lat, lon, threshold=200):
+def is_on_route(lat, lon, line="G", threshold=200):
     """
     Determine if a given point (lat, lon) is within threshold meters
-    of any shape point in g_shapes.csv.
+    of any shape point in the shapes.csv file.
     """
-    shapes = load_g_shapes()
+    # Ensure threshold is a number (in case it's passed as a string)
+    threshold = float(threshold)
+    
+    shapes = load_shapes(line)
     if not shapes:
         print("No shape data available.")
         return False
@@ -108,20 +170,23 @@ def is_on_route(lat, lon, threshold=200):
     print(f"Minimum distance from beacon to route: {min_distance} meters")
     return min_distance <= threshold
 
-def get_last_terminus_report(reports):
+def get_last_terminus_report(reports, line="G"):
     """
     Iterate over beacon reports (sorted most recent first)
     and return the first report where the beacon was within STOP_RADIUS
-    of one of the known terminus coordinates.
+    of one of the known terminus coordinates for the specified line.
     Returns a tuple (report, terminus_id) if found; otherwise, None.
     """
-    print(f"Scanning {len(reports)} beacon reports for a terminus event...")
+    print(f"Scanning {len(reports)} beacon reports for a terminus event on {line} line...")
+    termini = TERMINUS_COORDS_G if line == "G" else TERMINUS_COORDS_C if line == "C" else None
+    if termini is None:
+        print(f"Unsupported line: {line}")
+        return None
+    
     reports = sorted(reports, key=lambda r: r.timestamp, reverse=True)
     for rep in reports:
-        #print(f"Checking beacon report at {rep.timestamp} (lat: {rep.latitude}, lon: {rep.longitude})")
-        for term_id, (term_lat, term_lon) in TERMINUS_COORDS.items():
+        for term_id, (term_lat, term_lon) in termini.items():
             distance = haversine_distance(rep.latitude, rep.longitude, term_lat, term_lon)
-            #print(f"Distance to terminus {term_id}: {distance} meters")
             if distance <= STOP_RADIUS:
                 print(f"Terminus event found: {term_id} at {rep.timestamp}")
                 return rep, term_id
@@ -139,45 +204,65 @@ def get_nearest_stop(lat, lon, stops):
             nearest = stop
     return nearest, min_dist
 
-def get_direction_from_terminus(terminus_id):
+def get_direction_from_terminus(terminus_id, line="G"):
     """
     Determine the direction of travel based on the last terminus.
-    If the last terminus was G22 (Court Sq, north), then the train left the north and is traveling Southbound.
-    If the last terminus was F27 (Church Av, south), then it is traveling Northbound.
+    For G trains:
+      - If the last terminus was G22 (Court Sq, north), then the train left the north and is traveling Southbound.
+      - If the last terminus was F27 (Church Av, south), then it is traveling Northbound.
+    For C trains:
+      - If the last terminus was A09 (168 St, north), then the train is traveling Southbound.
+      - If the last terminus was A55 (Euclid Av, south), then the train is traveling Northbound.
     """
-    if terminus_id == "G22":
-        return "Southbound"
-    elif terminus_id == "F27":
-        return "Northbound"
+    if line == "G":
+        if terminus_id == "G22":
+            return "Southbound"
+        elif terminus_id == "F27":
+            return "Northbound"
+    elif line == "C":
+        if terminus_id == "A09":
+            return "Southbound"
+        elif terminus_id == "A55":
+            return "Northbound"
     return "Unknown"
 
-def get_next_stop(current_stop_id, direction, stops):
+def get_next_stop(current_stop_id, direction, stops, line="G"):
     """
     Given a current stop id, direction, and a list of stops (ordered by route),
-    return the next stop along the route.
+    return the next stop along the route for the specified line.
     """
+    if line == "G":
+        sequence = STOP_SEQUENCE_G
+    elif line == "C":
+        sequence = STOP_SEQUENCE_C
+    else:
+        print(f"Unsupported line: {line}")
+        return None
+    
     try:
-        index = STOP_SEQUENCE.index(current_stop_id)
+        index = sequence.index(current_stop_id)
     except ValueError:
         return None
-    if direction == "Southbound" and index < len(STOP_SEQUENCE) - 1:
-        next_stop_id = STOP_SEQUENCE[index + 1]
+    
+    if direction == "Southbound" and index < len(sequence) - 1:
+        next_stop_id = sequence[index + 1]
     elif direction == "Northbound" and index > 0:
-        next_stop_id = STOP_SEQUENCE[index - 1]
+        next_stop_id = sequence[index - 1]
     else:
         return None
+    
     for stop in stops:
         if stop["stop_id"] == next_stop_id:
             return stop
     return None
 
 # ----- Beacon & GTFS Matching Functions -----
-def match_gtfs_train(reports):
+def match_gtfs_train(reports, line="G"):
     """
     Fetch beacon reports using the provided private key, then scan the history
-    to find the most recent time the train was at one of the termini.
+    to find the most recent time the train was at one of the termini for the specified line.
     Using that terminus event's timestamp (converted to Eastern time),
-    look for a G train (from the NYCTFeed) whose departure_time is within ±3 minutes.
+    look for a train (from the NYCTFeed) whose departure_time is within ±3 minutes.
     Returns the matching train (if found) or None.
     """
     
@@ -185,39 +270,39 @@ def match_gtfs_train(reports):
         print("No beacon reports available.")
         return None, None
     
-    last_term_result = get_last_terminus_report(reports)
-
+    last_term_result = get_last_terminus_report(reports, line)
     if not last_term_result:
         print("No terminus event found in beacon history.")
         return None, None
     
     term_report, term_id = last_term_result
-
-    print(f"Last terminus event: {term_id} at {term_report.timestamp}")
-
-    # Convert terminus event timestamp to Eastern time and keep it offset-aware
+    print(f"Last terminus event on {line} line: {term_id} at {term_report.timestamp}")
+    
+    # Convert terminus event timestamp to Eastern time and keep it offset-aware.
     eastern = pytz.timezone("US/Eastern")
     term_time_eastern = term_report.timestamp.astimezone(eastern)
     print(f"Terminus event time in Eastern: {term_time_eastern}")
-
+    
     # For comparison with train.departure_time, we assume departure_time is Eastern offset-naive,
     # so we remove tzinfo.
     matching_time = term_time_eastern.replace(tzinfo=None)
     print(f"Using terminus event time (naive Eastern): {matching_time}")
-
-    # Load the realtime GTFS feed for G trains.
-    print("Loading GTFS feed for G trains...")
-    feed = NYCTFeed("G")
     
-    expected_terminus = "F27S" if term_id == "G22" else "G22N"
-    trains = feed.filter_trips(line_id=["G"], headed_for_stop_id=expected_terminus, underway=True)
-
-    print(f"GTFS feed loaded; {len(feed.trips)} trips found.")
-
+    # Load the realtime GTFS feed for the specified line.
+    print(f"Loading GTFS feed for {line} trains...")
+    feed = NYCTFeed(line)
+    
+    expected_terminus = EXPECTED_TERMINI.get(line, {}).get(term_id)
+    if not expected_terminus:
+        print(f"Unexpected terminus id {term_id} for line {line}.")
+        return None, term_id
+    
+    trains = feed.filter_trips(line_id=[line], headed_for_stop_id=expected_terminus, underway=True)
+    print(f"GTFS feed loaded; {len(feed.trips)} trips found for line {line}.")
+    
     for train in trains:
         diff = abs((train.departure_time - matching_time).total_seconds())
-        print(f"Train {train.trip_id} departure_time: {train.departure_time}, diff: {diff} seconds",
-                     train.trip_id, train.departure_time, diff)
+        print(f"Train {train.trip_id} departure_time: {train.departure_time}, diff: {diff} seconds")
         if diff <= MATCH_WINDOW_SEC:
             print(f"Matching GTFS train found: {train.trip_id} (diff: {diff} seconds)")
             return train, term_id

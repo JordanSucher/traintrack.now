@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from gtfs.fetch_reports import fetch_reports
 import os
 from datetime import datetime, timedelta
@@ -9,9 +9,34 @@ import psycopg2
 import re 
 import json
 from findmy import KeyPair
+import hashlib
 
 class handler(BaseHTTPRequestHandler):
- 
+     
+    def get_line_for_beacon(self, beacon_str):
+        """
+        Compute a hash of the beacon string and compare against known values
+        (stored in environment variables) for G and C beacons.
+        
+        The environment variables G_BEACON_HASHES and C_BEACON_HASHES should be comma‐separated lists 
+        of SHA-256 hexdigests.
+        """
+        digest = hashlib.sha256(beacon_str.encode()).hexdigest()
+        g_hashes = {
+            "94f3ac69f181ec7a0d0d013ac32561b5f8bb77140de4df1d7206f5594a212865",
+            "74490939e7d633b32aaf878ca30825a32caa28e510be8e820d3c16ca33b7811f"
+        }
+        c_hashes = {
+            "41943df1738d6a9e3383396a68fd8408ed0e0a94906b1e9942c8465384a21bae"
+        }
+        
+        if digest in g_hashes:
+            return "G"
+        elif digest in c_hashes:
+            return "C"
+        else:
+            return "unknown"
+
     def do_GET(self):
         results = []  # List to collect results from all beacons
         errors = []   # List to collect any errors
@@ -21,12 +46,14 @@ class handler(BaseHTTPRequestHandler):
         MAX_REPORT_AGE_MIN = 60  # Beacon reports older than 60 minutes => not functioning
 
         TERMINUS_COORDS = {
-            "F27": (40.644041, -73.979678),  # Church Av (south terminus)
-            "G22": (40.746554, -73.943832)   # Court Sq (north terminus)
+            "F27": (40.644041, -73.979678),  # Church Av (G south terminus)
+            "G22": (40.746554, -73.943832),   # Court Sq (G north terminus)
+            "A09": (40.840719, -73.939561),   # 168 St (C north terminus)
+            "A55": (40.675377, -73.872106)   # Euclid Av (C south terminus)
         }
 
         #Grab beacon IDs
-        beaconId = os.environ.get("BEACON_ID")
+        #beaconId = os.environ.get("BEACON_ID")
         beaconIds = json.loads(os.environ.get("BEACON_IDS", "[]"))
 
         try:
@@ -51,6 +78,10 @@ class handler(BaseHTTPRequestHandler):
                 beacon_result = {}  # Dictionary to store results for this beacon
                 beacon_result["beaconId"] = beacon_str
                 
+                # Determine the line based on the beacon ID.
+                line = self.get_line_for_beacon(beacon_str)
+                beacon_result["line"] = line  # Optional: include for debugging
+
                 try:
                     # Convert the beacon Base64 string to a KeyPair object
                     key_obj = KeyPair.from_b64(beacon_str)
@@ -108,7 +139,7 @@ class handler(BaseHTTPRequestHandler):
                             beacon_result["reason"] = f"Last report is older than {MAX_REPORT_AGE_MIN} minutes"
 
                         # Check if beacon is on the route.
-                        elif not is_on_route(latest_report["latitude"], latest_report["longitude"]):
+                        elif not is_on_route(latest_report["latitude"], latest_report["longitude"], line):
                             beacon_result["status"] = "not_functioning"
                             beacon_result["reason"] = "Location not along route"
                     
@@ -128,7 +159,7 @@ class handler(BaseHTTPRequestHandler):
                             if not at_terminus:
                         
                                 # Try matching a GTFS train using the last terminus event.
-                                matching_train, last_term_id = match_gtfs_train(reports)
+                                matching_train, last_term_id = match_gtfs_train(reports, line)
 
                                 if matching_train:
                                     beacon_result["status"] = "matched"
@@ -143,7 +174,7 @@ class handler(BaseHTTPRequestHandler):
                                     # No matching train found. Report beacon details and determine nearest station & direction.
                                     beacon_result["status"] = "unmatched"
                                     
-                                    stops = load_stops()
+                                    stops = load_stops(line)
                                     nearest_stop, distance = get_nearest_stop(latest_report["latitude"], latest_report["longitude"], stops)
                                     direction = get_direction_from_terminus(last_term_id) if last_term_id else "Unknown"
                     
@@ -168,7 +199,7 @@ class handler(BaseHTTPRequestHandler):
                                             }
 
                                             # Try to find matching train by next stop
-                                            feed = NYCTFeed("G")
+                                            feed = NYCTFeed(line)
 
                                             for train in feed.trips:
                                                 if train.stop_time_updates:
@@ -193,11 +224,11 @@ class handler(BaseHTTPRequestHandler):
 
                 except Exception as e:
                     error_info = {
-                        "beaconId": beaconId,
+                        "beaconId": beacon_str,
                         "error": str(e)
                     }
                     errors.append(error_info)
-                    print(f"Error processing beacon {beaconId}: {e}")
+                    print(f"Error processing beacon {beacon_str}: {e}")
 
             # Prepare the final response
             response = {
@@ -229,3 +260,12 @@ class handler(BaseHTTPRequestHandler):
                 cur.close()
             if 'conn' in locals() and conn is not None:
                 conn.close()
+
+if __name__ == '__main__':
+    # Define server address and port
+    server_address = ('', 8000)  # '' binds to all available interfaces
+    httpd = HTTPServer(server_address, handler)
+    print("Server running on port 8000...")
+    
+    # Run the server until interrupted
+    httpd.serve_forever()
