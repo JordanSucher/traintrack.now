@@ -8,6 +8,7 @@ import geojsonC from '@/gtfs/c_shapes.json';
 import stationsDataLocal from '@/gtfs/stations_data_local.json';
 import stationsDataExpress from '@/gtfs/stations_data_express.json';
 import mapPinC from '@/app/custom-pin-c.png';
+import mapPinG from '@/app/custom-pin-g.png';
 
 // Set your Mapbox access token
 mapboxgl.accessToken = "pk.eyJ1Ijoiam9zaHN1Y2hlciIsImEiOiJLQ3NDTXdjIn0.cXfOLf3n6qzEom1Tm1CX_g";
@@ -451,6 +452,15 @@ export default function OpenGangwayTrainTracker() {
       }
       
       if (currLatLong) {
+      
+		let pinImg = mapPinC.src; // default
+		if (rideId && rideId[0]?.tripId) {
+		// Extract the letter between "_" and ".."
+		const tripId = rideId[0].tripId;
+		const modeLetter = tripId.split('_')[1].split('..')[0];
+		pinImg = modeLetter === "G" ? mapPinG.src : mapPinC.src;
+		}
+
         // Create a container for the marker
         const markerContainer = document.createElement('div');
         markerContainer.className = 'relative w-[80px] h-[80px]';
@@ -464,7 +474,7 @@ export default function OpenGangwayTrainTracker() {
         // Create the actual pin element
         const pinEl = document.createElement('div');
         pinEl.className = 'relative z-10 w-[80px] h-[80px]';
-        pinEl.style.backgroundImage = `url(${mapPinC.src})`;
+        pinEl.style.backgroundImage = `url(${pinImg.src})`;
         pinEl.style.backgroundSize = 'contain';
         pinEl.style.backgroundRepeat = 'no-repeat';
         pinEl.style.backgroundPosition = 'center';
@@ -506,6 +516,14 @@ export default function OpenGangwayTrainTracker() {
     };
   }, []);
   
+  // Compute the mode letter from rideId (defaults to "C" if not available)
+  const modeLetter =
+    rideId && rideId[0] && rideId[0].tripId
+      ? rideId[0].tripId.split('_')[1].split('..')[0]
+      : "C";
+
+  // Determine the bullet color based on the mode letter
+  const bulletColor = modeLetter === "G" ? "#6CBE45" : "#2850AD";
 
   return (
     <div className="relative h-screen w-screen">
@@ -515,15 +533,18 @@ export default function OpenGangwayTrainTracker() {
       {/* Overlay text */}
       <div className="absolute top-0 sm:top-4 left-1 sm:left-4 bg-opacity-0 text-black p-4 w-1/2 rounded mx-auto max-w-2xl">
         <p className="text-sm sm:text-base sm-text-3xl md:text-4xl lg:text-6xl">
-          An <strong>R211T</strong> is heading <strong className="font-bold">{`${rideInfo ? rideInfo.direction : ""} `}</strong> from:
+          An <strong>R211T</strong> is heading <strong className="font-bold">{`${rideInfo ? rideInfo.direction : ""} `}</strong> to:
         </p>
           
       <div className="relative inline-flex items-center bg-black text-white mx-auto max-w-lg px-4 py-2 w-4/5 mt-2 mb-2">
         <span className="absolute top-3 sm:top-4 left-0 w-full h-0.25 bg-white"></span>
         <div className="flex justify-between items-center relative w-full">
           <span className="text-left font-bold text-sm sm:text-base sm-text-3xl md:text-2xl lg:text-3xl">{`${upcomingStops[0] ? upcomingStops[0].stopName : ""}`}</span>
-          <span className="inline-flex items-center justify-center h-4 w-4 sm:h-6 sm:w-6 md:h-10 md:w-10 lg:h-12 lg:w-12 rounded-full bg-[#2850AD] text-white font-bold text-sm sm:text-base sm-text-2xl md:text-2xl lg:text-4xl mt-4">
-            C
+			<span
+			className="inline-flex items-center justify-center h-4 w-4 sm:h-6 sm:w-6 md:h-10 md:w-10 lg:h-12 lg:w-12 rounded-full text-white font-bold text-sm sm:text-base sm:text-2xl md:text-2xl lg:text-4xl mt-4"
+			style={{ backgroundColor: bulletColor }}
+			>
+			  {modeLetter}
           </span>
         </div>
       </div>
