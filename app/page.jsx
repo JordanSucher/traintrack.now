@@ -5,7 +5,8 @@ import mapboxgl from 'mapbox-gl';
 import 'mapbox-gl/dist/mapbox-gl.css'; // Import Mapbox default CSS
 import geojson from '@/gtfs/g_shapes.json';
 import geojsonC from '@/gtfs/c_shapes.json';
-import stationsData from '@/gtfs/stations_data.json';
+import stationsDataLocal from '@/gtfs/stations_data_local.json';
+import stationsDataExpress from '@/gtfs/stations_data_express.json';
 import mapPinC from '@/app/custom-pin-c.png';
 
 // Set your Mapbox access token
@@ -342,31 +343,71 @@ export default function OpenGangwayTrainTracker() {
 	    });
 
 
-      // Add station data source
-      map.current.addSource('stations', {
+      // Add local station data source
+      map.current.addSource('stationsLocal', {
         type: 'geojson',
-        data: stationsData
+        data: stationsDataLocal
       });
 
-      // Add station circles
+      // Add express station data source
+      map.current.addSource('stationsExpress', {
+        type: 'geojson',
+        data: stationsDataExpress
+      });
+
+      // Add local station circles
       map.current.addLayer({
-        id: 'stations-layer',
+        id: 'stations-local-layer',
         type: 'circle',
-        source: 'stations',
+        source: 'stationsLocal',
         minzoom: 12,
         paint: {
-          'circle-radius': 5,
+          'circle-radius': 4,
           'circle-color': '#000',
           'circle-stroke-width': 2,
           'circle-stroke-color': '#ffffff'
         }
       });
 
-      // Add station labels
+      // Add express station circles
+      map.current.addLayer({
+        id: 'stations-express-layer',
+        type: 'circle',
+        source: 'stationsExpress',
+        minzoom: 12,
+        paint: {
+          'circle-radius': 4,
+          'circle-color': '#fff',
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#000'
+        }
+      });
+
+      // Add local station labels
       map.current.addLayer({
         id: 'station-labels',
         type: 'symbol',
-        source: 'stations',
+        source: 'stationsLocal',
+        minzoom: 12,
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-offset': [1, 1],
+          'text-anchor': 'top',
+          'text-size': 13,
+          'text-font': ['Helvetica Bold']
+        },
+        paint: {
+          'text-color': '#000000',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1
+        }
+      });
+
+      // Add express station labels
+      map.current.addLayer({
+        id: 'station-labels',
+        type: 'symbol',
+        source: 'stationsExpress',
         minzoom: 12,
         layout: {
           'text-field': ['get', 'name'],
@@ -497,7 +538,7 @@ export default function OpenGangwayTrainTracker() {
             C
           </span> and <span className="inline-flex items-center justify-center h-4 w-4 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-6 lg:w-6 rounded-full bg-[#6CBE45] text-white font-bold text-xs xs:text-base sm-text-xs md:text-xs lg:text-sm">
             G
-          </span> lines. There are at least 4 R211Ts running as of March 2025, not all of which are represented here. For more info, check out our <a href="https://github.com/JordanSucher/which-way-gangway" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">repo</a> and <a href="https://thingswemake.com/the-open-open-gangway-gang" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">blog post</a>. Made by the <a href="https://thingswemake.com" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">Sucher</a> <a href="https://jordansucher.com" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">Brothers</a> in Brooklyn.
+          </span> lines. There are ~3 R211Ts running as of March 2025, not all of which run at all times. For more info, check out our <a href="https://github.com/JordanSucher/which-way-gangway" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">repo</a> and <a href="https://thingswemake.com/the-open-open-gangway-gang" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">blog post</a>. Made by the <a href="https://thingswemake.com" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">Sucher</a> <a href="https://jordansucher.com" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">Brothers</a> in Brooklyn.
         </p>
       </footer>
 

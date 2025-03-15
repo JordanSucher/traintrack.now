@@ -1,0 +1,564 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.943832,
+          40.746554
+        ]
+      },
+      "properties": {
+        "name": "Court Square"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.949724,
+          40.744065
+        ]
+      },
+      "properties": {
+        "name": "21 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.954449,
+          40.731352
+        ]
+      },
+      "properties": {
+        "name": "Greenpoint Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.951277,
+          40.724635
+        ]
+      },
+      "properties": {
+        "name": "Nassau Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.951418,
+          40.712792
+        ]
+      },
+      "properties": {
+        "name": "Metropolitan Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.950308,
+          40.706092
+        ]
+      },
+      "properties": {
+        "name": "Broadway"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.950234,
+          40.700377
+        ]
+      },
+      "properties": {
+        "name": "Flushing Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.949046,
+          40.694568
+        ]
+      },
+      "properties": {
+        "name": "Myrtle–Willoughby Avs"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.953522,
+          40.689627
+        ]
+      },
+      "properties": {
+        "name": "Bedford–Nostrand Avs"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.96007,
+          40.688873
+        ]
+      },
+      "properties": {
+        "name": "Classon Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.966839,
+          40.688089
+        ]
+      },
+      "properties": {
+        "name": "Clinton–Washington Avs"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.975375,
+          40.687119
+        ]
+      },
+      "properties": {
+        "name": "Fulton St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.985001,
+          40.688484
+        ]
+      },
+      "properties": {
+        "name": "Hoyt–Schermerhorn Sts"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.990862,
+          40.686145
+        ]
+      },
+      "properties": {
+        "name": "Bergen St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.995048,
+          40.680303
+        ]
+      },
+      "properties": {
+        "name": "Carroll St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.995959,
+          40.67358
+        ]
+      },
+      "properties": {
+        "name": "Smith–9 Sts"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.989779,
+          40.670272
+        ]
+      },
+      "properties": {
+        "name": "4 Av-9 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.980305,
+          40.666271
+        ]
+      },
+      "properties": {
+        "name": "7 Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.979493,
+          40.660365
+        ]
+      },
+      "properties": {
+        "name": "15 St–Prospect Park"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.975776,
+          40.650782
+        ]
+      },
+      "properties": {
+        "name": "Fort Hamilton Pkwy"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.979678,
+          40.644041
+        ]
+      },
+      "properties": {
+        "name": "Church Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.939892,
+          40.836013
+        ]
+      },
+      "properties": {
+        "name": "163 St-Amsterdam Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.941514,
+          40.830518
+        ]
+      },
+      "properties": {
+        "name": "155 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.947649,
+          40.817894
+        ]
+      },
+      "properties": {
+        "name": "135 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.954882,
+          40.805085
+        ]
+      },
+      "properties": {
+        "name": "116 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.958161,
+          40.800603
+        ]
+      },
+      "properties": {
+        "name": "Cathedral Pkwy (110 St)"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.961454,
+          40.796092
+        ]
+      },
+      "properties": {
+        "name": "103 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.964696,
+          40.791642
+        ]
+      },
+      "properties": {
+        "name": "96 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.968916,
+          40.785868
+        ]
+      },
+      "properties": {
+        "name": "86 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.972143,
+          40.781433
+        ]
+      },
+      "properties": {
+        "name": "81 St-Museum of Natural History"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.97641,
+          40.775594
+        ]
+      },
+      "properties": {
+        "name": "72 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.985984,
+          40.762456
+        ]
+      },
+      "properties": {
+        "name": "50 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.998041,
+          40.745906
+        ]
+      },
+      "properties": {
+        "name": "23 St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -74.00169,
+          40.740893
+        ]
+      },
+      "properties": {
+        "name": "Spring St"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.973946,
+          40.686113
+        ]
+      },
+      "properties": {
+        "name": "Lafayette Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.965838,
+          40.683263
+        ]
+      },
+      "properties": {
+        "name": "Clinton-Washington Avs"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.956848,
+          40.68138
+        ]
+      },
+      "properties": {
+        "name": "Franklin Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.940858,
+          40.679921
+        ]
+      },
+      "properties": {
+        "name": "Kingston-Throop Avs"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.920786,
+          40.678822
+        ]
+      },
+      "properties": {
+        "name": "Ralph Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.911946,
+          40.67834
+        ]
+      },
+      "properties": {
+        "name": "Rockaway Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.896548,
+          40.674542
+        ]
+      },
+      "properties": {
+        "name": "Liberty Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.890358,
+          40.67271
+        ]
+      },
+      "properties": {
+        "name": "Van Siclen Av"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.88075,
+          40.67413
+        ]
+      },
+      "properties": {
+        "name": "Shepherd Av"
+      }
+    }
+  ]
+}
