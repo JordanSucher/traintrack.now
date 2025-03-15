@@ -11,7 +11,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgres://neondb_owner:npg_jTicV4s5Nxpr@ep-solitary-boat-a5alpc8h-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require"
 }
 
 // Record of each time we fetch the GTFS data

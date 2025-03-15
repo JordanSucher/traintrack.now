@@ -135,7 +135,7 @@ class handler(BaseHTTPRequestHandler):
                                     beacon_result["trainId"] = matching_train.trip_id
                                     
                                     #save match to db
-                                    cur.execute("INSERT INTO \"BeaconTripMapping\" (\"fetchId\", \"tripId\", \"beaconId\", \"latestBeaconReport\") VALUES (%s, %s, %s, %s)", (fetch_id, matching_train.trip_id, beaconId, latest_report["timestamp"]))
+                                    cur.execute("INSERT INTO \"BeaconTripMapping\" (\"fetchId\", \"tripId\", \"beaconId\", \"latestBeaconReport\") VALUES (%s, %s, %s, %s)", (fetch_id, matching_train.trip_id, beacon_str, latest_report["timestamp"]))
 
                                     conn.commit()
 

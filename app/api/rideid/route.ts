@@ -5,16 +5,14 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export async function GET() {
+  // Get the latest beacon report for every unique beaconId
+  const beacons = await prisma.beaconTripMapping.findMany({
+    distinct: ['beaconId'],
+    orderBy: [
+      { beaconId: 'asc' },            // Group by beaconId
+      { latestBeaconReport: 'desc' }  // For each group, take the most recent report
+    ],
+  });
 
-    //get most recent beacontripmapping
-
-    const beacons = await prisma.beaconTripMapping.findMany({
-        orderBy: {
-          latestBeaconReport: "desc",
-        },
-        take: 1,
-      });
-
-
-    return NextResponse.json(beacons);
+  return NextResponse.json(beacons);
 }
