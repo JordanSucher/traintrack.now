@@ -474,7 +474,7 @@ export default function OpenGangwayTrainTracker() {
         // Create the actual pin element
         const pinEl = document.createElement('div');
         pinEl.className = 'relative z-10 w-[80px] h-[80px]';
-        pinEl.style.backgroundImage = `url(${pinImg.src})`;
+        pinEl.style.backgroundImage = `url(${pinImg})`;
         pinEl.style.backgroundSize = 'contain';
         pinEl.style.backgroundRepeat = 'no-repeat';
         pinEl.style.backgroundPosition = 'center';
