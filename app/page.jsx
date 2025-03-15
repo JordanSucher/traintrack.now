@@ -201,6 +201,14 @@ useEffect(() => {
           }
         }
       });
+      const bounds = new mapboxgl.LngLatBounds();
+Object.values(trainMarkers.current).forEach(markerObj => {
+  const { lng, lat } = markerObj.marker.getLngLat();
+  bounds.extend([lng, lat]);
+});
+if (!bounds.isEmpty()) {
+  map.current.fitBounds(bounds, { padding: 50, duration: 1000, maxZoom: 12, bearing: 29 });
+}
     } catch (error) {
       console.error("Error fetching GTFS updates:", error);
     }
