@@ -67,145 +67,149 @@ export default function OpenGangwayTrainTracker() {
     };
   }, []);
 
-  // For each beacon, fetch GTFS update and update or create its marker
-  useEffect(() => {
-    const fetchGTFSUpdates = async () => {
-      if (!beaconData || beaconData.length === 0 || Object.keys(stops).length === 0) {
-        console.log("Waiting for beaconData and stops to load...");
-        return;
-      }
-      console.log("Processing GTFS updates for beacons:", beaconData);
+useEffect(() => {
+  const fetchGTFSUpdates = async () => {
+    if (!beaconData || beaconData.length === 0 || Object.keys(stops).length === 0) {
+      console.log("Waiting for beaconData and stops to load...");
+      return;
+    }
+    console.log("Processing GTFS updates for beacons:", beaconData);
 
-      try {
-        const response = await fetch("https://www.goodservice.io/api/routes/?detailed=1");
-        let gtfsData = await response.json();
-        gtfsData = gtfsData.routes.G.trips;
-        gtfsData = [
-          ...gtfsData.north.map(trip => ({ ...trip, direction: "north" })),
-          ...gtfsData.south.map(trip => ({ ...trip, direction: "south" }))
-        ];
+    try {
+      const response = await fetch("https://www.goodservice.io/api/routes/?detailed=1");
+      let gtfsData = await response.json();
+      gtfsData = gtfsData.routes.G.trips;
+      gtfsData = [
+        ...gtfsData.north.map(trip => ({ ...trip, direction: "north" })),
+        ...gtfsData.south.map(trip => ({ ...trip, direction: "south" }))
+      ];
 
-        const currentEpoch = new Date().getTime() / 1000;
+      const currentEpoch = new Date().getTime() / 1000;
 
-        beaconData.forEach(beacon => {
-          console.log(`Processing beacon ${beacon.beaconId}: tripId=${beacon.tripId}`);
-          if (!beacon.tripId) {
-            console.log(`Skipping beacon ${beacon.beaconId} (missing tripId)`);
-            return;
-          }
+      beaconData.forEach(beacon => {
+        console.log(`Processing beacon ${beacon.beaconId}: tripId=${beacon.tripId}`);
+        if (!beacon.tripId) {
+          console.log(`Skipping beacon ${beacon.beaconId} (missing tripId)`);
+          return;
+        }
 
-          const tripUpdates = gtfsData.filter(trip => trip.id === beacon.tripId);
-          console.log(`Beacon ${beacon.beaconId} tripUpdates:`, tripUpdates);
-          if (tripUpdates.length === 0) {
-            console.log(`No trip update found for beacon ${beacon.beaconId}`);
-            return;
-          }
-          const tripInfo = tripUpdates[0];
+        const tripUpdates = gtfsData.filter(trip => trip.id === beacon.tripId);
+        console.log(`Beacon ${beacon.beaconId} tripUpdates:`, tripUpdates);
+        if (tripUpdates.length === 0) {
+          console.log(`No trip update found for beacon ${beacon.beaconId}`);
+          return;
+        }
+        const tripInfo = tripUpdates[0];
 
-          let stopTimes = [];
-          Object.entries(tripInfo.stops).forEach(([stopId, epoch]) => {
-            stopTimes.push({
-              stopId,
-              stopName: stops[stopId]?.stop_name,
-              stopEpoch: epoch,
+        let stopTimes = [];
+        Object.entries(tripInfo.stops).forEach(([stopId, epoch]) => {
+          stopTimes.push({
+            stopId,
+            stopName: stops[stopId]?.stop_name,
+            stopEpoch: epoch,
+          });
+        });
+        stopTimes.sort((a, b) => a.stopEpoch - b.stopEpoch);
+        const futureStops = stopTimes.filter(stop => stop.stopEpoch > currentEpoch);
+        const currentStop = stopTimes.filter(stop => stop.stopEpoch <= currentEpoch).at(-1);
+
+        console.log(
+          `Beacon ${beacon.beaconId} stops - currentStop:`,
+          currentStop,
+          "futureStops:",
+          futureStops
+        );
+
+        let currLatLong = null;
+        if (currentStop && stops[currentStop.stopId]) {
+          currLatLong = {
+            lat: parseFloat(stops[currentStop.stopId].stop_lat),
+            lon: parseFloat(stops[currentStop.stopId].stop_lon),
+          };
+        } else if (futureStops.length > 0 && stops[futureStops[0].stopId]) {
+          currLatLong = {
+            lat: parseFloat(stops[futureStops[0].stopId].stop_lat),
+            lon: parseFloat(stops[futureStops[0].stopId].stop_lon),
+          };
+        }
+        console.log(`Beacon ${beacon.beaconId} computed coordinates:`, currLatLong);
+
+        if (currLatLong) {
+          // Use tripId for mode letter extraction
+          const tripIdStr = beacon.tripId;
+          const modeLetter = tripIdStr.split('_')[1].split('..')[0];
+          const pinImg = modeLetter === "G" ? mapPinG.src : mapPinC.src;
+          const pulseColor = modeLetter === "G" ? "#6CBE45" : "#2850AD";
+
+          const markerContainer = document.createElement('div');
+          markerContainer.className = 'relative w-[80px] h-[80px]';
+
+          const pingEl = document.createElement('div');
+          pingEl.className =
+            'absolute inset-0 animate-ping origin-center rounded-full border-2';
+          // Set the border color via inline style
+          pingEl.style.borderColor = pulseColor;
+
+          const pinEl = document.createElement('div');
+          pinEl.className = 'relative z-10 w-[80px] h-[80px]';
+          pinEl.style.backgroundImage = `url(${pinImg})`;
+          pinEl.style.backgroundSize = 'contain';
+          pinEl.style.backgroundRepeat = 'no-repeat';
+          pinEl.style.backgroundPosition = 'center';
+
+          markerContainer.appendChild(pingEl);
+          markerContainer.appendChild(pinEl);
+
+          // Determine the stop name to display (always show the upcoming stop)
+          const displayStopName =
+            futureStops.length > 0 ? stops[futureStops[0].stopId]?.stop_name : "";
+          // Determine the next stop time to display
+          const displayStopTime =
+            futureStops.length > 0 ? futureStops[0].stopEpoch : "now";
+
+          // Add click event listener to update the overlay text
+          markerContainer.addEventListener('click', () => {
+            setSelectedBeacon({
+              beaconId: beacon.beaconId,
+              direction: tripInfo.direction,
+              stopName: displayStopName,
+              stopTime: displayStopTime,
+              tripId: beacon.tripId,
+              latestBeaconReport: beacon.latestBeaconReport,
             });
           });
-          stopTimes.sort((a, b) => a.stopEpoch - b.stopEpoch);
-          const futureStops = stopTimes.filter(stop => stop.stopEpoch > currentEpoch);
-          const currentStop = stopTimes.filter(stop => stop.stopEpoch <= currentEpoch).at(-1);
 
-          console.log(`Beacon ${beacon.beaconId} stops - currentStop:`, currentStop, "futureStops:", futureStops);
-
-          let currLatLong = null;
-          if (currentStop && stops[currentStop.stopId]) {
-            currLatLong = {
-              lat: parseFloat(stops[currentStop.stopId].stop_lat),
-              lon: parseFloat(stops[currentStop.stopId].stop_lon),
-            };
-          } else if (futureStops.length > 0 && stops[futureStops[0].stopId]) {
-            currLatLong = {
-              lat: parseFloat(stops[futureStops[0].stopId].stop_lat),
-              lon: parseFloat(stops[futureStops[0].stopId].stop_lon),
+          if (trainMarkers.current[beacon.beaconId]) {
+            console.log(`Updating marker for beacon ${beacon.beaconId}`);
+            trainMarkers.current[beacon.beaconId].marker.setLngLat([
+              currLatLong.lon,
+              currLatLong.lat,
+            ]);
+          } else {
+            console.log(`Creating marker for beacon ${beacon.beaconId}`);
+            const marker = new mapboxgl.Marker({
+              element: markerContainer,
+              anchor: 'bottom',
+              offset: [0, 30],
+            })
+              .setLngLat([currLatLong.lon, currLatLong.lat])
+              .addTo(map.current);
+            trainMarkers.current[beacon.beaconId] = {
+              marker,
+              pingEl, // reference to the ping element
             };
           }
-          console.log(`Beacon ${beacon.beaconId} computed coordinates:`, currLatLong);
-
-          if (currLatLong) {
-            // Use tripId for mode letter extraction
-            const tripIdStr = beacon.tripId;
-            const modeLetter = tripIdStr.split('_')[1].split('..')[0];
-            const pinImg = modeLetter === "G" ? mapPinG.src : mapPinC.src;
-			const pulseColor = modeLetter === "G" ? "#6CBE45" : "#2850AD";
-
-            const markerContainer = document.createElement('div');
-            markerContainer.className = 'relative w-[80px] h-[80px]';
-
-            const pingEl = document.createElement('div');
-            pingEl.className =
-              'absolute inset-0 animate-ping origin-center rounded-full border-2';
-
-            const pinEl = document.createElement('div');
-            pinEl.className = 'relative z-10 w-[80px] h-[80px]';
-            pinEl.style.backgroundImage = `url(${pinImg})`;
-            pinEl.style.backgroundSize = 'contain';
-            pinEl.style.backgroundRepeat = 'no-repeat';
-            pinEl.style.backgroundPosition = 'center';
-			pingEl.style.borderColor = pulseColor;
-
-            markerContainer.appendChild(pingEl);
-            markerContainer.appendChild(pinEl);
-
-            // Determine the stop name to display
-			const displayStopName = futureStops.length > 0 
-			  ? stops[futureStops[0].stopId]?.stop_name 
-			  : "";
-
-            // Determine the next stop time to display
-			const displayStopTime = futureStops.length > 0 
-			  ? futureStops[0].stopEpoch 
-			  : "now";
-			  
-            // Add click event listener to update the overlay text
-            markerContainer.addEventListener('click', () => {
-              setSelectedBeacon({
-                beaconId: beacon.beaconId,
-                direction: tripInfo.direction,
-                stopName: displayStopName,
-                stopTime: displayStopTime,
-                tripId: beacon.tripId,
-				latestBeaconReport: beacon.latestBeaconReport
-              });
-            });
-
-            if (trainMarkers.current[beacon.beaconId]) {
-              console.log(`Updating marker for beacon ${beacon.beaconId}`);
-              trainMarkers.current[beacon.beaconId].setLngLat([currLatLong.lon, currLatLong.lat]);
-            } else {
-              console.log(`Creating marker for beacon ${beacon.beaconId}`);
-  const marker = new mapboxgl.Marker({
-    element: markerContainer,
-    anchor: 'bottom',
-    offset: [0, 30]
-  })
-                .setLngLat([currLatLong.lon, currLatLong.lat])
-                .addTo(map.current);
-                  trainMarkers.current[beacon.beaconId] = {
-    marker,
-    pingEl, // reference to the ping element
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching GTFS updates:", error);
+    }
   };
 
-            }
-          }
-        });
-      } catch (error) {
-        console.error("Error fetching GTFS updates:", error);
-      }
-    };
-
-    fetchGTFSUpdates();
-    const gtfsInterval = setInterval(fetchGTFSUpdates, 30000);
-    return () => clearInterval(gtfsInterval);
-  }, [beaconData, stops]);
+  fetchGTFSUpdates();
+  const gtfsInterval = setInterval(fetchGTFSUpdates, 30000);
+  return () => clearInterval(gtfsInterval);
+}, [beaconData, stops]);
 
 useEffect(() => {
   // When selectedBeacon changes, update the ping element for each marker.
