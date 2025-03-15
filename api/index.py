@@ -8,6 +8,7 @@ from gtfs.utils import load_stops, is_on_route, haversine_distance, match_gtfs_t
 import psycopg2
 import re 
 import json
+from findmy import KeyPair
 
 class handler(BaseHTTPRequestHandler):
  
@@ -46,12 +47,15 @@ class handler(BaseHTTPRequestHandler):
 
 
             # for each beacon, get reports and push to DB
-            for beaconId in beaconIds:
+            for beacon_str in beaconIds:
                 beacon_result = {}  # Dictionary to store results for this beacon
-                beacon_result["beaconId"] = beaconId
+                beacon_result["beaconId"] = beacon_str
                 
                 try:
-                    reports = all_reports[beaconId]
+                    # Convert the beacon Base64 string to a KeyPair object
+                    key_obj = KeyPair.from_b64(beacon_str)
+                    # Use the KeyPair object to index the all_reports dictionary
+                    reports = all_reports[key_obj]
                     
                     structured_reports = []
                     
@@ -69,7 +73,7 @@ class handler(BaseHTTPRequestHandler):
                             
                             report_dict = {
                                 "fetchId": fetch_id,
-                                "beaconId": beaconId,
+                                "beaconId": beacon_str,
                                 "hashed_adv_key": hashed_key,
                                 "timestamp": timestamp,
                                 "latitude": lat,
