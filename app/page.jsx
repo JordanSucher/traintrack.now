@@ -388,7 +388,7 @@ const selectedBulletColor =
             <strong className="font-bold">{selectedBeacon.direction}</strong> to:
           </p>
 
-          <div className="relative inline-flex items-center bg-black text-white mx-auto max-w-lg px-4 py-2 w-4/5 md:w-4/6 mt-2 mb-2">
+          <div className="relative inline-flex items-center bg-black text-white mx-auto max-w-lg px-4 py-2 w-1/1 md:w-5/6 mt-2 mb-2">
             <span className="absolute top-3 sm:top-4 left-0 w-full h-0.25 bg-white"></span>
             <div className="flex justify-between items-center relative w-full">
               <span className="text-left font-bold text-md text-base sm:text-xl md:text-xl lg:text-2xl sm:mt-3">
