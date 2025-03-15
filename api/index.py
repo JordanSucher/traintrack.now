@@ -66,6 +66,14 @@ class handler(BaseHTTPRequestHandler):
             )
             cur = conn.cursor()
             
+            # Delete rows older than 24 hours
+            delete_query = """
+            DELETE FROM \"BeaconReport\"
+            WHERE \"timestamp\" < NOW() - INTERVAL '4 hours';
+            """
+            cur.execute(delete_query)
+            conn.commit()
+            
             #Create a fetch record
             cur.execute("INSERT INTO \"GtfsFetch\" (\"feedName\", \"fetchTime\", \"feedTimestamp\") VALUES (%s, %s, %s) RETURNING id", ("G", "now()", "now()"))
             fetch_id = cur.fetchone()[0]
