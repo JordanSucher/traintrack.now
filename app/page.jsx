@@ -348,7 +348,7 @@ const selectedBulletColor =
   selectedModeLetter === "G" ? "#6CBE45" : "#2850AD";
 
   return (
-    <div className="relative h-screen w-screen">
+    <div className="relative h-dvh w-dvw">
       {/* Map container */}
       <div ref={mapContainer} style={{ height: '100%', width: '100%' }} />
 
