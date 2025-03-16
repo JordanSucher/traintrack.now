@@ -436,7 +436,7 @@ const selectedBulletColor =
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
-        { Object.keys(trainMarkers.current).length === 0 
+        { trainMarkers.length === 0 
       		? <>No <strong>R211T</strong> locations available. Check back soon!</> 
             : <>Tap on an <strong>R211T</strong> for more info.</> }
           </p>
