@@ -25,6 +25,8 @@ export default function OpenGangwayTrainTracker() {
   const trainMarkers = useRef({});
   const rideIdIntervalRef = useRef(null);
   let tripInfo = null;
+  let pinEl = null;
+  const [markersExist, setMarkersExist] = useState(false);
 
   // Fetch stops data once on mount
   useEffect(() => {
@@ -151,7 +153,7 @@ useEffect(() => {
           // Set the border color via inline style
           pingEl.style.borderColor = pulseColor;
 
-          const pinEl = document.createElement('div');
+          pinEl = document.createElement('div');
           pinEl.className = 'train-pin relative z-10 w-[80px] h-[80px]';
           pinEl.style.backgroundImage = `url(${pinImg})`;
           pinEl.style.backgroundSize = 'contain';
@@ -399,7 +401,11 @@ const selectedModeLetter =
 const selectedBulletColor =
   selectedModeLetter === "G" ? "#6CBE45" : "#2850AD";
 
-const markersExist = typeof window !== "undefined" && document.getElementsByClassName('train-pin').length > 0;
+useEffect(() => {
+  // This will run on the client only.
+  const exists = document.getElementsByClassName('train-pin').length > 0;
+  setMarkersExist(exists);
+}, [pinEl]); // Run whenever beaconData (or other relevant state) updates.
 
   return (
     <div className="relative h-dvh w-dvw">
@@ -438,7 +444,7 @@ const markersExist = typeof window !== "undefined" && document.getElementsByClas
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
-        { !markersExist 
+        { !setMarkersExist 
       		? <>No <strong>R211T</strong> locations available. Check back soon!</> 
             : <>Tap on an <strong>R211T</strong> for more info.</> }
           </p>
