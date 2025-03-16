@@ -26,7 +26,7 @@ export default function OpenGangwayTrainTracker() {
   const rideIdIntervalRef = useRef(null);
   let tripInfo = null;
   let pinEl = null;
-  const [markersExist, setMarkersExist] = useState(false);
+  let setMarkersExist = 0;
 
   // Fetch stops data once on mount
   useEffect(() => {
@@ -162,6 +162,8 @@ useEffect(() => {
 
           markerContainer.appendChild(pingEl);
           markerContainer.appendChild(pinEl);
+
+          setMarkersExist = document.getElementsByClassName('train-pin').length
 
           // Determine the stop name to display (always show the upcoming stop)
           const displayStopName =
@@ -403,8 +405,7 @@ const selectedBulletColor =
 
 useEffect(() => {
   // This will run on the client only.
-  const exists = document.getElementsByClassName('train-pin').length > 0;
-  setMarkersExist(exists);
+  setMarkersExist = document.getElementsByClassName('train-pin').length;
 }, [pinEl]); // Run whenever beaconData (or other relevant state) updates.
 
   return (
@@ -444,9 +445,9 @@ useEffect(() => {
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
-        { !setMarkersExist 
-      		? <>No <strong>R211T</strong> locations available. Check back soon!</> 
-            : <>Tap on an <strong>R211T</strong> for more info.</> }
+        { setMarkersExist >= 0
+            ? <>Tap on an <strong>R211T</strong> for more info.</> 
+      		: <>No <strong>R211T</strong> locations available. Check back soon!</> }
           </p>
       )}
     </div>
@@ -462,7 +463,7 @@ useEffect(() => {
           </span> and <span className="inline-flex items-center justify-center h-4 w-4 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-6 lg:w-6 rounded-full bg-[#6CBE45] text-white font-bold text-xs xs:text-base sm-text-xs md:text-xs lg:text-sm">
             G
           </span> lines. For more info, check out our&nbsp;
-          <a href="https://github.com/JordanSucher/which-way-gangway" className="text-blue-500 hover:text-blue-700 underline">
+          <a href="https://github.com/JordanSucher/traintrack.now" className="text-blue-500 hover:text-blue-700 underline">
             repo
           </a> and&nbsp;
           <a href="https://thingswemake.com/the-open-open-gangway-gang" className="text-blue-500 hover:text-blue-700 underline">
