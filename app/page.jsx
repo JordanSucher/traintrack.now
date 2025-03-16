@@ -399,7 +399,7 @@ const selectedModeLetter =
 const selectedBulletColor =
   selectedModeLetter === "G" ? "#6CBE45" : "#2850AD";
 
-const markersExist = document.getElementsByClassName('train-pin').length > 0;
+const markersExist = document.getElementsByClassName('train-pin').length > 0; 
 
   return (
     <div className="relative h-dvh w-dvw">
