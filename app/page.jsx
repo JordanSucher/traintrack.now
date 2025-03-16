@@ -168,6 +168,17 @@ useEffect(() => {
           const displayStopTime =
             futureStops.length > 0 ? futureStops[0].stopEpoch : "now";
 
+			if (selectedBeacon && selectedBeacon.beaconId === beacon.beaconId) {
+			  setSelectedBeacon({
+				beaconId: beacon.beaconId,
+				direction: tripInfo.direction,
+				stopName: displayStopName,
+				stopTime: displayStopTime,
+				tripId: beacon.tripId,
+				latestBeaconReport: beacon.latestBeaconReport,
+			  });
+			}
+
           // Add click event listener to update the overlay text
           markerContainer.addEventListener('click', () => {
             setSelectedBeacon({
@@ -424,10 +435,10 @@ const selectedBulletColor =
         </p>
         </>
       ) : (
-          <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-6xl w-1/1">
-        {tripInfo != 0
-            ? <>Tap on an <strong>R211T</strong> for more info.</> 
-      		: <>No <strong>R211T</strong> location available. Check back soon!</> }
+          <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
+        { Object.keys(trainMarkers.current).length === 0 
+      		? <>No <strong>R211T</strong> locations available. Check back soon!</> 
+            : <>Tap on an <strong>R211T</strong> for more info.</> }
           </p>
       )}
     </div>

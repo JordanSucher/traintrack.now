@@ -2,7 +2,7 @@
     "crons": [
         {
             "path": "/api/index.py",
-            "schedule": "*/20 * * * *"
+            "schedule": "*/13 * * * *"
         }
     ]
 }
