@@ -152,7 +152,7 @@ useEffect(() => {
           pingEl.style.borderColor = pulseColor;
 
           const pinEl = document.createElement('div');
-          pinEl.className = 'relative z-10 w-[80px] h-[80px]';
+          pinEl.className = 'train-pin relative z-10 w-[80px] h-[80px]';
           pinEl.style.backgroundImage = `url(${pinImg})`;
           pinEl.style.backgroundSize = 'contain';
           pinEl.style.backgroundRepeat = 'no-repeat';
@@ -399,6 +399,8 @@ const selectedModeLetter =
 const selectedBulletColor =
   selectedModeLetter === "G" ? "#6CBE45" : "#2850AD";
 
+const markersExist = document.getElementsByClassName('train-pin').length > 0;
+
   return (
     <div className="relative h-dvh w-dvw">
       {/* Map container */}
@@ -436,7 +438,7 @@ const selectedBulletColor =
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
-        { trainMarkers.length === 0 
+        { !markersExist 
       		? <>No <strong>R211T</strong> locations available. Check back soon!</> 
             : <>Tap on an <strong>R211T</strong> for more info.</> }
           </p>
@@ -459,7 +461,7 @@ const selectedBulletColor =
           </a> and&nbsp;
           <a href="https://thingswemake.com/the-open-open-gangway-gang" className="text-blue-500 hover:text-blue-700 underline">
             blog post
-          </a>.
+          </a>. Made by the <a href="https://thingswemake.com" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">Sucher</a> <a href="https://jordansucher.com" className="text-blue-500 hover:text-blue-700 underline transition duration-300 ease-in-out">Brothers</a> in Brooklyn.
         </p>
       </footer>
 
