@@ -24,6 +24,7 @@ export default function OpenGangwayTrainTracker() {
   // A ref to store markers for each beacon, keyed by beaconId
   const trainMarkers = useRef({});
   const rideIdIntervalRef = useRef(null);
+  let tripInfo = null;
 
   // Fetch stops data once on mount
   useEffect(() => {
@@ -99,7 +100,7 @@ useEffect(() => {
           console.log(`No trip update found for beacon ${beacon.beaconId}`);
           return;
         }
-        const tripInfo = tripUpdates[0];
+        tripInfo = tripUpdates[0];
 
         let stopTimes = [];
         Object.entries(tripInfo.stops).forEach(([stopId, epoch]) => {
@@ -177,6 +178,11 @@ useEffect(() => {
               tripId: beacon.tripId,
               latestBeaconReport: beacon.latestBeaconReport,
             });
+				map.current.flyTo({
+				  center: [currLatLong.lon, currLatLong.lat],
+				  zoom: 14, // Adjust the zoom level as needed
+				  essential: true,
+				});
           });
 
           if (trainMarkers.current[beacon.beaconId]) {
@@ -388,7 +394,7 @@ const selectedBulletColor =
       <div ref={mapContainer} style={{ height: '100%', width: '100%' }} />
 
     {/* Overlay text */}
-    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/75 text-black p-4 w-3/6 sm:w-4/9 rounded mx-auto max-w-2xl border border-gray-300">
+    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/75 text-black p-4 w-4/5 sm:w-4/9 rounded mx-auto max-w-2xl border border-gray-300">
       {selectedBeacon ? (
         <>
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl">
@@ -399,7 +405,7 @@ const selectedBulletColor =
           <div className="relative inline-flex items-center bg-black text-white mx-auto max-w-lg px-4 py-2 w-1/1 md:w-5/6 mt-2 mb-2">
             <span className="absolute top-3 sm:top-4 left-0 w-full h-0.25 bg-white"></span>
             <div className="flex justify-between items-center relative w-full">
-              <span className="text-left font-bold text-md text-base sm:text-xl md:text-xl lg:text-2xl sm:mt-3">
+              <span className="text-left font-bold text-md text-base sm:text-xl md:text-xl lg:text-2xl sm:mt-1">
                 {selectedBeacon.stopName}
               </span>
               <span
@@ -419,7 +425,9 @@ const selectedBulletColor =
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-6xl w-1/1">
-            Tap on an <strong>R211T</strong> for more info.
+        {tripInfo != 0
+            ? <>Tap on an <strong>R211T</strong> for more info.</> 
+      		: <>No <strong>R211T</strong> location available. Check back soon!</> }
           </p>
       )}
     </div>
@@ -430,7 +438,11 @@ const selectedBulletColor =
           <strong>What is this all about?</strong> The R211T is the fancy new&nbsp;
           <a href="https://en.wikipedia.org/wiki/R211_(New_York_City_Subway_car)#Open-gangway_trains" className="text-blue-500 hover:text-blue-700 underline">
             open-gangway train
-          </a> currently running in a pilot program on the C and G lines. For more info, check out our&nbsp;
+          </a> currently running in a pilot program on the on the <span className="inline-flex items-center justify-center h-4 w-4 sm:h-6 sm:w-6 md:h-4 md:w-4 lg:h-6 lg:w-6 rounded-full bg-[#2850AD] text-white font-bold text-xs xs:text-base sm-text-xs md:text-xs lg:text-sm">
+            C
+          </span> and <span className="inline-flex items-center justify-center h-4 w-4 sm:h-4 sm:w-4 md:h-4 md:w-4 lg:h-6 lg:w-6 rounded-full bg-[#6CBE45] text-white font-bold text-xs xs:text-base sm-text-xs md:text-xs lg:text-sm">
+            G
+          </span> lines. For more info, check out our&nbsp;
           <a href="https://github.com/JordanSucher/which-way-gangway" className="text-blue-500 hover:text-blue-700 underline">
             repo
           </a> and&nbsp;
