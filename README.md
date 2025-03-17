@@ -8,4 +8,4 @@ The site uses a Next.js front-end to display current location and a Python/Postg
 
 Read more at [thingswemake.com](https://thingswemake.com/the-open-open-gangway-gang/).
 
-Made by the [Sucher](httos://thingswemake.com) [Brothers](https://www.jordansucher.com) in Brooklyn.
+Made by the [Sucher](https://thingswemake.com) [Brothers](https://www.jordansucher.com) in Brooklyn.
