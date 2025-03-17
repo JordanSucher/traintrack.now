@@ -445,7 +445,7 @@ useEffect(() => {
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
-        { setMarkersExist >= 0
+        { setMarkersExist > 0
             ? <>Tap on an <strong>R211T</strong> for more info.</> 
       		: <>No <strong>R211T</strong> locations available. Check back soon!</> }
           </p>
