@@ -35,7 +35,7 @@ class handler(BaseHTTPRequestHandler):
         elif digest in c_hashes:
             return "C"
         else:
-            return "unknown"
+            return "unknown" 
 
     def do_GET(self):
         results = []  # List to collect results from all beacons
