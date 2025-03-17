@@ -81,12 +81,7 @@ useEffect(() => {
 
     try {
       const response = await fetch("https://www.goodservice.io/api/routes/?detailed=1");
-      let gtfsData = await response.json();
-      gtfsData = gtfsData.routes.G.trips;
-      gtfsData = [
-        ...gtfsData.north.map(trip => ({ ...trip, direction: "north" })),
-        ...gtfsData.south.map(trip => ({ ...trip, direction: "south" }))
-      ];
+      const fullGtfsData = await response.json();
 
       const currentEpoch = new Date().getTime() / 1000;
 
@@ -96,6 +91,14 @@ useEffect(() => {
           console.log(`Skipping beacon ${beacon.beaconId} (missing tripId)`);
           return;
         }
+
+        modeLetter = beacon.tripId.split('_')[1].split('..')[0];
+       let gtfsData = fullGtfsData.routes[modeLetter].trips;
+      gtfsData = [
+        ...gtfsData.north.map(trip => ({ ...trip, direction: "north" })),
+        ...gtfsData.south.map(trip => ({ ...trip, direction: "south" }))
+      ];
+        
 
         const tripUpdates = gtfsData.filter(trip => trip.id === beacon.tripId);
         console.log(`Beacon ${beacon.beaconId} tripUpdates:`, tripUpdates);
