@@ -26,7 +26,8 @@ export default function OpenGangwayTrainTracker() {
   const rideIdIntervalRef = useRef(null);
   let tripInfo = null;
   let pinEl = null;
-  let setMarkersExist = 0;
+  const [markersExist, setMarkersExist] = useState(0);
+  let modeLetter;
 
   // Fetch stops data once on mount
   useEffect(() => {
@@ -140,7 +141,7 @@ useEffect(() => {
         if (currLatLong) {
           // Use tripId for mode letter extraction
           const tripIdStr = beacon.tripId;
-          const modeLetter = tripIdStr.split('_')[1].split('..')[0];
+          modeLetter = tripIdStr.split('_')[1].split('..')[0];
           const pinImg = modeLetter === "G" ? mapPinG.src : mapPinC.src;
           const pulseColor = modeLetter === "G" ? "#6CBE45" : "#2850AD";
 
@@ -163,7 +164,7 @@ useEffect(() => {
           markerContainer.appendChild(pingEl);
           markerContainer.appendChild(pinEl);
 
-          setMarkersExist = document.getElementsByClassName('train-pin').length
+          setMarkersExist(prevCount => prevCount + 1);
 
           // Determine the stop name to display (always show the upcoming stop)
           const displayStopName =
@@ -403,10 +404,10 @@ const selectedModeLetter =
 const selectedBulletColor =
   selectedModeLetter === "G" ? "#6CBE45" : "#2850AD";
 
-useEffect(() => {
-  // This will run on the client only.
-  setMarkersExist = document.getElementsByClassName('train-pin').length;
-}, [pinEl]); // Run whenever beaconData (or other relevant state) updates.
+// useEffect(() => {
+//   // This will run on the client only.
+//   setMarkersExist += 1;
+// }, [pinEl]); // Run whenever beaconData (or other relevant state) updates.
 
   return (
     <div className="relative h-dvh w-dvw">
@@ -445,7 +446,7 @@ useEffect(() => {
         </>
       ) : (
           <p className="text-2xl sm:text-base sm:text-3xl md:text-4xl lg:text-5xl w-1/1">
-        { setMarkersExist > 0
+        { markersExist > 0
             ? <>Tap on an <strong>R211T</strong> for more info.</> 
       		: <>No <strong>R211T</strong> locations available. Check back soon!</> }
           </p>
