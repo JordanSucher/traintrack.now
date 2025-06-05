@@ -8,7 +8,8 @@ from collections.abc import MutableSequence
 
 # URL to (public or local) anisette server
 # ANISETTE_SERVER = "https://ani.sidestore.io"
-ANISETTE_SERVER = "https://ani.npeg.us/"
+# ANISETTE_SERVER = "https://ani.npeg.us/"
+ANISETTE_SERVER = "https://ani.846969.xyz"
 
 logging.basicConfig(level=logging.INFO)
 
