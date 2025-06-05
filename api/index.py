@@ -24,7 +24,8 @@ class handler(BaseHTTPRequestHandler):
         digest = hashlib.sha256(beacon_str.encode()).hexdigest()
         g_hashes = {
             "94f3ac69f181ec7a0d0d013ac32561b5f8bb77140de4df1d7206f5594a212865",
-            "74490939e7d633b32aaf878ca30825a32caa28e510be8e820d3c16ca33b7811f"
+            "74490939e7d633b32aaf878ca30825a32caa28e510be8e820d3c16ca33b7811f",
+            "ecf02a1da7ccbb631577f16e4c7ee20d93de776f8485c340c6312a68698e0f1a"
         }
         c_hashes = {
             "41943df1738d6a9e3383396a68fd8408ed0e0a94906b1e9942c8465384a21bae"
