@@ -8,7 +8,7 @@ from nyct_gtfs import NYCTFeed  # Using NYCTFeed from nyct_gtfs
 # Constants
 STOP_RADIUS = 200  # meters
 MAX_REPORT_AGE_MIN = 60  # Beacon reports older than 60 minutes => not functioning
-MATCH_WINDOW_SEC = 180  # ±3 minutes for matching departure time
+MATCH_WINDOW_SEC = 240  # ±4 minutes for matching departure time
 
 ANISETTE_SERVER = "https://ani.npeg.us"
 
