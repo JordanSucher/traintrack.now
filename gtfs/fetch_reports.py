@@ -7,7 +7,7 @@ from collections.abc import MutableSequence
 
 
 # URL to (public or local) anisette server
-ANISETTE_SERVER = "https://ani.sidestore.zip"
+ANISETTE_SERVER = os.environ.get("ANISETTE_SERVER")
 # ANISETTE_SERVER = "https://ani.npeg.us/"
 
 logging.basicConfig(level=logging.INFO)

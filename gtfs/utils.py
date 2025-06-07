@@ -10,7 +10,7 @@ STOP_RADIUS = 200  # meters
 MAX_REPORT_AGE_MIN = 60  # Beacon reports older than 60 minutes => not functioning
 MATCH_WINDOW_SEC = 240  # ±4 minutes for matching departure time
 
-ANISETTE_SERVER = "https://ani.sidestore.zip"
+ANISETTE_SERVER = os.environ.get("ANISETTE_SERVER")
 
 # Terminus coordinates for G and C trains.
 TERMINUS_COORDS_G = {
