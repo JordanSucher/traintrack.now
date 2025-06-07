@@ -1,6 +1,6 @@
 import logging
 import sys
-
+import os
 from findmy import KeyPair
 from findmy.reports import RemoteAnisetteProvider
 from collections.abc import MutableSequence
