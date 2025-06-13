@@ -107,7 +107,7 @@ def get_account_sync(anisette: BaseAnisetteProvider) -> AppleAccount:
         # ---------- RESTORE ----------
         saved_state = _download_json(BLOB_URL)
         acc.restore(saved_state)
-    except vercel_blob.errors.BlobNotFoundError:
+    except:
         _login_sync(acc)
         # ---------- SAVE --------------
         _upload_json(BLOB_PATH, acc.export())
