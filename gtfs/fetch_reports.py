@@ -9,6 +9,7 @@ import time
 import datetime as dt
 import email.utils
 import requests
+import typing
 from requests.auth import HTTPBasicAuth
 
 # URL to (public or local) anisette server
@@ -32,8 +33,43 @@ from findmy.reports import (
     TrustedDeviceSecondFactorMethod,
 )
 
-ACCOUNT_STORE = "account.json"
+BLOB_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]      # injected by Vercel
+API      = "https://blob.vercel-storage.com/api/blob" # stable REST entrypoint
+ACCOUNT  = "account.json"                             # blob pathname
+
+Headers = {"Authorization": f"Bearer {BLOB_TOKEN}"}
+
 CODE_RE = re.compile(r"\b(\d{6})\b")
+
+def _head(pathname: str) -> typing.Optional[dict]:
+    """Return Blob metadata or None when the object does not exist."""
+    r = requests.get(API, params={"pathname": pathname}, headers=Headers, timeout=10)
+    if r.status_code == 404:
+        return None
+    r.raise_for_status()
+    return r.json()
+
+def _get_json(download_url: str) -> dict:
+    """Download and parse the JSON file stored in Blob."""
+    r = requests.get(download_url, timeout=10)
+    r.raise_for_status()
+    return r.json()
+
+def _put_json(pathname: str, payload: dict) -> None:
+    """Upload JSON, allowing overwrite of the same pathname."""
+    r = requests.post(
+        API,
+        params={
+            "pathname": pathname,
+            "allowOverwrite": "true",   # opt in to mutability
+            "contentType": "application/json",
+            # optional: "cacheControlMaxAge": "120"   # 2-min edge-cache
+        },
+        data=json.dumps(payload).encode(),
+        headers=Headers,
+        timeout=10,
+    )
+    r.raise_for_status()                 # 201 Created (or 200 on overwrite)
 
 def _fetch_code_from_twilio(max_wait: int = 30, poll_every: int = 5, freshness_secs: int = 60) -> str:
     sid   = os.environ["TWILIO_SID"]
@@ -85,15 +121,12 @@ def get_account_sync(anisette: BaseAnisetteProvider) -> AppleAccount:
     """Tries to restore a saved Apple account, or prompts the user for login otherwise. (sync)"""
     acc = AppleAccount(anisette)
 
-    # Save / restore account logic
-    acc_store = Path("account.json")
-    try:
-        with acc_store.open() as f:
-            acc.restore(json.load(f))
-    except FileNotFoundError:
-        _login_sync(acc)
-        # with acc_store.open("w+") as f:
-        #     json.dump(acc.export(), f)
+    meta = _head(ACCOUNT)                 
+    if meta:
+        acc.restore(_get_json(meta["downloadUrl"]))
+    else:
+        _login_sync(acc)                  
+        _put_json(ACCOUNT, acc.export())  
 
     return acc
 
