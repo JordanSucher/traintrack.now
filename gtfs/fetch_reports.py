@@ -11,6 +11,7 @@ import email.utils
 import requests
 import typing
 from requests.auth import HTTPBasicAuth
+import vercel_blob
 
 # URL to (public or local) anisette server
 ANISETTE_SERVER = os.environ.get("ANISETTE_SERVER")
@@ -33,44 +34,25 @@ from findmy.reports import (
     TrustedDeviceSecondFactorMethod,
 )
 
-BLOB_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]
-BLOB_BASE_URL = os.environ["BLOB_BASE_URL"]
-API      = f"{BLOB_BASE_URL}/api/blob" # stable REST entrypoint
-ACCOUNT  = "account.json"                             # blob pathname
-
-Headers = {"Authorization": f"Bearer {BLOB_TOKEN}"}
+BLOB_PATH   = "account.json"
+BLOB_BASE_URL   = os.getenv("VERCEL_BLOB_STORE_URL")
+BLOB_URL    = f"{BLOB_BASE_URL}/{BLOB_PATH}"
 
 CODE_RE = re.compile(r"\b(\d{6})\b")
 
-def _head(pathname: str) -> typing.Optional[dict]:
-    """Return Blob metadata or None when the object does not exist."""
-    r = requests.get(API, params={"pathname": pathname}, headers=Headers, timeout=10)
-    if r.status_code == 404:
-        return None
-    r.raise_for_status()
-    return r.json()
+def _download_json(url: str) -> dict:
+    """Get the file’s bytes in-memory"""
+    meta = vercel_blob.head(url)
+    resp = requests.get(meta["downloadUrl"], timeout=10)
+    resp.raise_for_status()
+    return resp.json()
 
-def _get_json(download_url: str) -> dict:
-    """Download and parse the JSON file stored in Blob."""
-    r = requests.get(download_url, timeout=10)
-    r.raise_for_status()
-    return r.json()
-
-def _put_json(pathname: str, payload: dict) -> None:
-    """Upload JSON, allowing overwrite of the same pathname."""
-    r = requests.post(
-        API,
-        params={
-            "pathname": pathname,
-            "allowOverwrite": "true",   # opt in to mutability
-            "contentType": "application/json",
-            # optional: "cacheControlMaxAge": "120"   # 2-min edge-cache
-        },
-        data=json.dumps(payload).encode(),
-        headers=Headers,
-        timeout=10,
+def _upload_json(path: str, data: dict) -> None:
+    vercel_blob.put(
+        path,
+        json.dumps(data, separators=(",", ":")).encode(),
+        {"contentType": "application/json"}
     )
-    r.raise_for_status()                 # 201 Created (or 200 on overwrite)
 
 def _fetch_code_from_twilio(max_wait: int = 30, poll_every: int = 5, freshness_secs: int = 60) -> str:
     sid   = os.environ["TWILIO_SID"]
@@ -119,15 +101,16 @@ def _fetch_code_from_twilio(max_wait: int = 30, poll_every: int = 5, freshness_s
     raise TimeoutError("Timed out waiting for Apple 2FA SMS via Twilio.")
 
 def get_account_sync(anisette: BaseAnisetteProvider) -> AppleAccount:
-    """Tries to restore a saved Apple account, or prompts the user for login otherwise. (sync)"""
     acc = AppleAccount(anisette)
 
-    meta = _head(ACCOUNT)                 
-    if meta:
-        acc.restore(_get_json(meta["downloadUrl"]))
-    else:
-        _login_sync(acc)                  
-        _put_json(ACCOUNT, acc.export())  
+    try:
+        # ---------- RESTORE ----------
+        saved_state = _download_json(BLOB_URL)
+        acc.restore(saved_state)
+    except vercel_blob.errors.BlobNotFoundError:
+        _login_sync(acc)
+        # ---------- SAVE --------------
+        _upload_json(BLOB_PATH, acc.export())
 
     return acc
 
