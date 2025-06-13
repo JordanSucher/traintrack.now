@@ -63,7 +63,8 @@ def _upload_json(path: str, data: dict) -> None:
         path,
         _encrypt_json(data),
         {
-            "contentType": "application/octet-stream"
+            "contentType": "application/octet-stream",
+            "allowOverwrite": "true"
         }
     )
 
