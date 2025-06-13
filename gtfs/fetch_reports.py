@@ -33,8 +33,9 @@ from findmy.reports import (
     TrustedDeviceSecondFactorMethod,
 )
 
-BLOB_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]      # injected by Vercel
-API      = "https://blob.vercel-storage.com/api/blob" # stable REST entrypoint
+BLOB_TOKEN = os.environ["BLOB_READ_WRITE_TOKEN"]
+BLOB_BASE_URL = os.environ["BLOB_BASE_URL"]
+API      = f"{BLOB_BASE_URL}/api/blob" # stable REST entrypoint
 ACCOUNT  = "account.json"                             # blob pathname
 
 Headers = {"Authorization": f"Bearer {BLOB_TOKEN}"}
