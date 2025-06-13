@@ -12,6 +12,7 @@ import requests
 import typing
 from requests.auth import HTTPBasicAuth
 import vercel_blob
+from cryptography.fernet import Fernet, InvalidToken
 
 # URL to (public or local) anisette server
 ANISETTE_SERVER = os.environ.get("ANISETTE_SERVER")
@@ -38,20 +39,32 @@ BLOB_PATH   = "account.json"
 BLOB_BASE_URL   = os.getenv("VERCEL_BLOB_STORE_URL")
 BLOB_URL    = f"{BLOB_BASE_URL}/{BLOB_PATH}"
 
+FERNET_KEY  = os.environ["BLOB_KEY"].encode()
+cipher      = Fernet(FERNET_KEY)
+
 CODE_RE = re.compile(r"\b(\d{6})\b")
 
+def _encrypt_json(obj: dict) -> bytes:
+    return cipher.encrypt(json.dumps(obj, separators=(",", ":")).encode())
+
+def _decrypt_json(blob: bytes) -> dict:
+    try:
+        return json.loads(cipher.decrypt(blob))
+    except InvalidToken:
+        raise ValueError("The blob could not be decrypted (wrong key or tampered data).")
+
 def _download_json(url: str) -> dict:
-    """Get the file’s bytes in-memory"""
-    meta = vercel_blob.head(url)
-    resp = requests.get(meta["downloadUrl"], timeout=10)
-    resp.raise_for_status()
-    return resp.json()
+    meta = vercel_blob.head(url)                          # cheap HEAD call
+    blob = requests.get(meta["downloadUrl"], timeout=10).content
+    return _decrypt_json(blob)
 
 def _upload_json(path: str, data: dict) -> None:
     vercel_blob.put(
         path,
-        json.dumps(data, separators=(",", ":")).encode(),
-        {"contentType": "application/json"}
+        _encrypt_json(data),
+        {
+            "contentType": "application/octet-stream"
+        }
     )
 
 def _fetch_code_from_twilio(max_wait: int = 30, poll_every: int = 5, freshness_secs: int = 60) -> str:

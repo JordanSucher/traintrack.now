@@ -6,3 +6,4 @@ requests
 pytz
 nyct_gtfs
 vercel_blob
+cryptography
