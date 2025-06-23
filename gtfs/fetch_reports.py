@@ -158,6 +158,8 @@ def _login_sync(account: AppleAccount) -> None:
         #code = input("Code? > ")
         code = _fetch_code_from_twilio()
 
+        print("Twilio code received")
+
         # This automatically finishes the post-2FA login flow
         method.submit(code)
 
