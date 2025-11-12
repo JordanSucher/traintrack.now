@@ -4,6 +4,6 @@ gtfs-realtime-bindings
 protobuf
 requests
 pytz
-nyct_gtfs
+nyct_gtfs==2.0.0
 vercel_blob
 cryptography
