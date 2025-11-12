@@ -80,7 +80,7 @@ useEffect(() => {
     console.log("Processing GTFS updates for beacons:", beaconData);
 
     try {
-      const response = await fetch("https://www.goodservice.io/api/routes/?detailed=1");
+      const response = await fetch("https://api.subwaynow.app/routes/?detailed=1");
       const fullGtfsData = await response.json();
 
       const currentEpoch = new Date().getTime() / 1000;
