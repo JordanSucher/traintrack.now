@@ -30,7 +30,7 @@ class handler(BaseHTTPRequestHandler):
         }
         c_hashes = {
             "41943df1738d6a9e3383396a68fd8408ed0e0a94906b1e9942c8465384a21bae",
-            "fbcdd499a4357fec50b915ced4390342dc58aabb626e984909bbe9d2c10dd021"
+            "9cc3f9bfa0bdbe8bf2e27ae47ff6d2b6614ded0bdc99ec851cad88b53e6d9b41"
         }
         
         if digest in g_hashes:
